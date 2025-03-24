@@ -5,6 +5,7 @@ description = "ESPN API Docs"
 requires-python = ">=3.12, <3.13"
 dependencies = [
     "cairosvg>=2.7.1",
+    "duckdb>=1.2.1",
     "mkdocs-material>=9.6.9",
     "mkdocs-minify-plugin>=0.8.0",
     "pillow>=11.1.0",
