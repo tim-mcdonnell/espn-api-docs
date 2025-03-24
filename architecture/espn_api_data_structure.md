@@ -514,132 +514,319 @@ Tracks statistical leaders for various categories.
   CREATE INDEX idx_stat_leaders_athlete ON StatisticalLeaders(athlete_id, season_id);
   ```
 
-### TeamRecords
-Team win/loss records.
+## Rankings Data Structure
+
+### RankingSystems
+Stores information about different ranking systems and polls.
 
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
-| record_id | INTEGER | Primary key (auto-increment) | 1 |
+| ranking_system_id | INTEGER | Primary key (auto-increment) | 1 |
+| espn_id | VARCHAR | ESPN's identifier | 1 |
+| name | VARCHAR | Full name of the ranking system | AP Top 25 |
+| short_name | VARCHAR | Abbreviated name | AP |
+| description | VARCHAR | Description of the ranking system | Associated Press Top 25 Poll |
+| poll_frequency | VARCHAR | How often the poll is released | weekly |
+| poll_day | VARCHAR | Day of week poll is released | Monday |
+| first_place_votes | BOOLEAN | If the poll includes first place votes | true |
+| points_based | BOOLEAN | If the poll is based on points | true |
+| voter_count | INTEGER | Number of voters in the poll | 61 |
+| voters | VARCHAR | JSON array of voter information | [{"name": "John Smith", "affiliation": "Tribune"}] |
+| active | BOOLEAN | If the poll is currently active | true |
+| historical_cutoff | INTEGER | Number of ranked teams historically | 25 |
+
+**Indexing:**
+- No explicit indexes needed due to small table size
+- Order by `name` to maintain alphabetical ordering
+
+### PollSchedule
+Tracks when polls are released across seasons.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| poll_schedule_id | INTEGER | Primary key (auto-increment) | 1 |
+| ranking_system_id | INTEGER | Foreign key to ranking systems | 1 |
+| season_id | INTEGER | Foreign key to seasons | 1 |
+| week_id | INTEGER | Foreign key to weeks | 1 |
+| release_date | TIMESTAMP | When the poll was released | 2024-03-11T18:00Z |
+| poll_name | VARCHAR | Name for this specific poll | Week 16 AP Poll |
+| notes | VARCHAR | Any special notes for this poll | Final poll before tournament |
+
+**Indexing:**
+- Order by `ranking_system_id, season_id, release_date` to optimize chronological ordering
+- Create index for week-based lookups:
+  ```sql
+  CREATE INDEX idx_poll_schedule_week ON PollSchedule(season_id, week_id, ranking_system_id);
+  ```
+
+### TeamRankings
+Historical team rankings in various polls over time.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| team_ranking_id | INTEGER | Primary key (auto-increment) | 1 |
+| poll_schedule_id | INTEGER | Foreign key to poll schedule | 1 |
+| team_id | INTEGER | Foreign key to teams | 1 |
+| rank | INTEGER | Current rank | 1 |
+| previous_rank | INTEGER | Previous rank | 2 |
+| points | DECIMAL | Total points received | 1571.0 |
+| first_place_votes | INTEGER | Number of first-place votes | 61 |
+| trend | VARCHAR | Direction of movement | up |
+| weeks_ranked | INTEGER | Consecutive weeks in rankings | 15 |
+| highest_rank | INTEGER | Highest rank this season | 1 |
+| dropped_out | BOOLEAN | If team dropped out of rankings | false |
+| receiving_votes | BOOLEAN | If receiving votes but not ranked | false |
+| points_when_unranked | DECIMAL | Points received when unranked | 15.0 |
+
+**Indexing:**
+- Order by `poll_schedule_id, rank` to optimize rank order lookups
+- Create composite indexes for common query patterns:
+  ```sql
+  CREATE INDEX idx_team_rankings_team ON TeamRankings(team_id, poll_schedule_id);
+  CREATE INDEX idx_team_rankings_movement ON TeamRankings(poll_schedule_id) WHERE trend = 'up' OR trend = 'down';
+  CREATE INDEX idx_team_rankings_votes ON TeamRankings(poll_schedule_id, receiving_votes) WHERE receiving_votes = true;
+  ```
+
+### RankingComparisons
+Pre-calculated comparisons between different ranking systems.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| comparison_id | INTEGER | Primary key (auto-increment) | 1 |
 | team_id | INTEGER | Foreign key to teams | 1 |
 | season_id | INTEGER | Foreign key to seasons | 1 |
-| season_type_id | INTEGER | Foreign key to season types | 1 |
-| group_id | INTEGER | Foreign key to groups (NULL for overall) | 1 |
-| record_type | VARCHAR | Type of record (total, home, away, etc.) | total |
-| wins | INTEGER | Number of wins | 15 |
-| losses | INTEGER | Number of losses | 2 |
-| ties | INTEGER | Number of ties | 0 |
-| win_percentage | DECIMAL | Win percentage | 0.882 |
-| streak_count | INTEGER | Current streak length | 5 |
-| streak_type | VARCHAR | Type of streak (W/L) | W |
-| last_updated | TIMESTAMP | When record was last updated | 2024-03-01T00:00Z |
+| week_id | INTEGER | Foreign key to weeks | 1 |
+| primary_ranking_system_id | INTEGER | Primary ranking system | 1 |
+| primary_rank | INTEGER | Rank in primary system | 5 |
+| comparison_ranking_system_id | INTEGER | System being compared | 2 |
+| comparison_rank | INTEGER | Rank in comparison system | 7 |
+| rank_difference | INTEGER | Difference between ranks | -2 |
+| last_updated | TIMESTAMP | When comparison was calculated | 2024-03-11T22:00Z |
 
 **Indexing:**
-- Order by `team_id, season_id, season_type_id, record_type` to optimize team record lookups
-- Create index for standings queries:
+- Order by `season_id, week_id, team_id` to optimize lookups for specific teams
+- Create index for large discrepancies:
   ```sql
-  CREATE INDEX idx_team_records_group ON TeamRecords(group_id, season_id, win_percentage DESC) WHERE group_id IS NOT NULL;
+  CREATE INDEX idx_ranking_comparisons_diff ON RankingComparisons(season_id, week_id, ABS(rank_difference) DESC) WHERE ABS(rank_difference) > 5;
   ```
 
-### BoxScores
-Detailed game box score data by period.
+## Awards Data Structure
+
+### AwardCategories
+Defines different awards and honors available in the league.
 
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
-| box_score_id | INTEGER | Primary key (auto-increment) | 1 |
-| event_id | INTEGER | Foreign key to events | 1 |
+| award_category_id | INTEGER | Primary key (auto-increment) | 1 |
+| espn_id | VARCHAR | ESPN's identifier | 1 |
+| name | VARCHAR | Full name of the award | Player of the Year |
+| display_name | VARCHAR | Display name | Player of the Year |
+| short_display_name | VARCHAR | Shortened display name | POY |
+| description | VARCHAR | Description of award criteria | Annual award given to the top player in NCAA Men's Basketball |
+| level | VARCHAR | Level of award (national, conference) | national |
+| organization | VARCHAR | Organization presenting award | NABC |
+| established_year | INTEGER | Year the award was established | 1969 |
+| active | BOOLEAN | If the award is currently active | true |
+| award_type | VARCHAR | Type of award (player, coach, team) | player |
+| frequency | VARCHAR | How often the award is given | annual |
+| historical_notes | VARCHAR | Notes on history/significance | Originally called the UPI Player of the Year |
+
+**Indexing:**
+- Order by `level, name` to group related awards together
+- No explicit indexes needed due to small table size
+
+### AwardRecipients
+Tracks winners of awards across seasons.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| recipient_id | INTEGER | Primary key (auto-increment) | 1 |
+| award_category_id | INTEGER | Foreign key to award categories | 1 |
+| season_id | INTEGER | Foreign key to seasons | 1 |
+| athlete_id | INTEGER | Foreign key to athletes (NULL for team/coach awards) | 1 |
 | team_id | INTEGER | Foreign key to teams | 1 |
-| period | INTEGER | Game period (1=1st half, 2=2nd half, etc.) | 1 |
-| period_type | VARCHAR | Type of period (REGULAR, OT) | REGULAR |
-| score | INTEGER | Points scored in period | 42 |
-| cumulative_score | INTEGER | Cumulative score | 42 |
-| last_updated | TIMESTAMP | When record was last updated | 2024-01-10T03:45Z |
+| coach_id | INTEGER | Foreign key to coaches (NULL for player/team awards) | NULL |
+| award_date | TIMESTAMP | When the award was given | 2024-04-05T00:00Z |
+| citation | VARCHAR | Award citation/reason | Led the nation in scoring and rebounding |
+| rank | INTEGER | Rank (for runner-ups/honorable mention) | 1 |
+| unanimous | BOOLEAN | If the selection was unanimous | true |
+| shared | BOOLEAN | If the award was shared | false |
+| co_recipients | VARCHAR | JSON array of co-recipient IDs | NULL |
+| presentation_url | VARCHAR | Link to presentation video/article | https://example.com/award-ceremony |
 
 **Indexing:**
-- Order by `event_id, team_id, period` to optimize box score lookups
-- No explicit indexes needed with proper ordering
-
-### PlayByPlay
-Detailed play-by-play data.
-
-| Column | Type | Description | Example |
-|--------|------|-------------|---------|
-| play_id | INTEGER | Primary key (auto-increment) | 1 |
-| event_id | INTEGER | Foreign key to events | 1 |
-| sequence_number | INTEGER | Play sequence in game | 243 |
-| period | INTEGER | Game period | 2 |
-| clock_time | VARCHAR | Game clock at time of play | 3:42 |
-| clock_seconds_remaining | INTEGER | Seconds remaining in period | 222 |
-| team_id | INTEGER | Foreign key to acting team | 1 |
-| athlete_id | INTEGER | Foreign key to primary athlete | 1 |
-| secondary_athlete_id | INTEGER | Foreign key to secondary athlete | 2 |
-| play_type | VARCHAR | Type of play | SHOT |
-| play_text | VARCHAR | Description of play | Edey made Dunk. Assisted by Loyer. |
-| score_home | INTEGER | Home team score after play | 85 |
-| score_away | INTEGER | Away team score after play | 78 |
-| coordinates_x | DECIMAL | X-coordinate of play | 50.0 |
-| coordinates_y | DECIMAL | Y-coordinate of play | 25.0 |
-| importance | DECIMAL | Play importance score | 0.85 |
-| success | BOOLEAN | If the play was successful | true |
-| scoring_play | BOOLEAN | If the play resulted in points | true |
-| points | INTEGER | Points scored on play | 2 |
-| possession_prior | INTEGER | Team ID with possession before | 1 |
-| possession_after | INTEGER | Team ID with possession after | 2 |
-| timestamp | TIMESTAMP | Wall clock time of play | 2024-01-10T01:45:32Z |
-
-**Indexing:**
-- Order by `event_id, sequence_number` to maintain chronological ordering within games
-- Create indexes for specialized queries:
+- Order by `award_category_id, season_id, rank` to optimize lookups by award and season
+- Create indexes for athlete and team lookups:
   ```sql
-  CREATE INDEX idx_play_by_play_athlete ON PlayByPlay(athlete_id, event_id);
-  CREATE INDEX idx_play_by_play_important ON PlayByPlay(event_id, importance DESC) WHERE importance > 0.7;
-  CREATE INDEX idx_play_by_play_scoring ON PlayByPlay(event_id, team_id) WHERE scoring_play = true;
+  CREATE INDEX idx_award_recipients_athlete ON AwardRecipients(athlete_id) WHERE athlete_id IS NOT NULL;
+  CREATE INDEX idx_award_recipients_team ON AwardRecipients(team_id);
   ```
 
-### StatCalculations
-Defines formulas for calculated statistics.
+### AllStarTeams
+Tracks all-conference, all-American, and other honorary teams.
 
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
-| calculation_id | INTEGER | Primary key (auto-increment) | 1 |
-| target_stat_type_id | INTEGER | Foreign key to the calculated stat | 15 |
-| formula | VARCHAR | SQL or math formula | (pts + reb*1.2 + ast*1.5 + stl*3 + blk*3 - to*1) / minutes_played |
-| description | VARCHAR | Description of calculation | Player Efficiency Rating |
-| components | VARCHAR | JSON array of component stat IDs | [1, 2, 3, 4, 5, 6] |
-| last_updated | TIMESTAMP | When calculation was last updated | 2024-03-01T00:00Z |
+| all_star_id | INTEGER | Primary key (auto-increment) | 1 |
+| name | VARCHAR | Team name | All-ACC First Team |
+| season_id | INTEGER | Foreign key to seasons | 1 |
+| level | VARCHAR | Level (All-American, All-Conference) | conference |
+| group_id | INTEGER | Foreign key to groups/conferences (NULL for national) | 1 |
+| team_type | VARCHAR | Type of team (first, second, third, honorable mention) | first |
+| organization | VARCHAR | Organization selecting the team | ACC |
+| selection_date | TIMESTAMP | When the team was announced | 2024-03-11T18:00Z |
 
-**Indexing:** No explicit indexes needed due to small table size.
+**Indexing:**
+- Order by `season_id, level, team_type` to group related selections together
+- No explicit indexes needed due to small table size
 
-### ShotCharts
-Shot location and outcome data.
+### AllStarSelections
+Links athletes to all-star teams.
 
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
-| shot_id | INTEGER | Primary key (auto-increment) | 1 |
-| event_id | INTEGER | Foreign key to events | 1 |
-| play_id | INTEGER | Foreign key to play-by-play | 243 |
-| team_id | INTEGER | Foreign key to teams | 1 |
+| selection_id | INTEGER | Primary key (auto-increment) | 1 |
+| all_star_id | INTEGER | Foreign key to all-star teams | 1 |
 | athlete_id | INTEGER | Foreign key to athletes | 1 |
-| assist_athlete_id | INTEGER | Foreign key to assisting athlete | 2 |
-| period | INTEGER | Game period | 2 |
-| clock_time | VARCHAR | Game clock at time of shot | 3:42 |
-| shot_type | VARCHAR | Type of shot | DUNK |
-| shot_distance | DECIMAL | Distance in feet | 0.5 |
-| coordinates_x | DECIMAL | X-coordinate of shot | 50.0 |
-| coordinates_y | DECIMAL | Y-coordinate of shot | 25.0 |
-| made | BOOLEAN | If shot was made | true |
-| blocked | BOOLEAN | If shot was blocked | false |
-| points | INTEGER | Points from shot | 2 |
-| fast_break | BOOLEAN | If shot was on fast break | false |
-| second_chance | BOOLEAN | If shot was second chance | false |
-| timestamp | TIMESTAMP | Wall clock time of shot | 2024-01-10T01:45:32Z |
+| team_id | INTEGER | Foreign key to athlete's team | 1 |
+| position_id | INTEGER | Foreign key to positions | 1 |
+| unanimous | BOOLEAN | If selection was unanimous | true |
+| captain | BOOLEAN | If selected as team captain | false |
+| honor_type | VARCHAR | Type of honor (regular, captain, MVP) | regular |
+| votes | INTEGER | Number of votes received | 125 |
+| order_num | INTEGER | Order listed on team | 1 |
 
 **Indexing:**
-- Order by `event_id, period, clock_seconds_remaining` to chronologically order shots within games
-- Create indexes for shot analysis:
+- Order by `all_star_id, order_num` to maintain intended display order
+- Create index for athlete career accolades:
   ```sql
-  CREATE INDEX idx_shot_charts_athlete ON ShotCharts(athlete_id, made);
-  CREATE INDEX idx_shot_charts_distance ON ShotCharts(athlete_id, shot_distance, made);
-  CREATE INDEX idx_shot_charts_spatial ON ShotCharts(athlete_id, coordinates_x, coordinates_y, made);
+  CREATE INDEX idx_all_star_selections_athlete ON AllStarSelections(athlete_id, season_id);
+  ```
+
+## Broadcast Data Structure
+
+### Networks
+Stores information about broadcast networks/channels.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| network_id | INTEGER | Primary key (auto-increment) | 1 |
+| espn_id | VARCHAR | ESPN's identifier (if any) | 101 |
+| name | VARCHAR | Full network name | Big Ten Network |
+| short_name | VARCHAR | Network abbreviation | BTN |
+| type | VARCHAR | Network type | TV |
+| logo_url | VARCHAR | URL to network logo | https://a.espncdn.com/i/networks/btn.png |
+| parent_company | VARCHAR | Parent company | Fox Corporation |
+| is_subscription | BOOLEAN | If requires paid subscription | false |
+
+**Indexing:**
+- No explicit indexes needed due to small table size
+- Order by `name` for quick lookups
+
+### BroadcastMarkets
+Defines different market types and regions.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| market_id | INTEGER | Primary key (auto-increment) | 1 |
+| espn_id | VARCHAR | ESPN's identifier | 1 |
+| name | VARCHAR | Market name | National |
+| type | VARCHAR | Market type | National/Regional/Local |
+| region | VARCHAR | Regional identifier (if applicable) | NULL |
+| countries | VARCHAR | JSON array of country codes | ["US", "CA"] |
+| description | VARCHAR | Market description | Available throughout US |
+
+**Indexing:**
+- No explicit indexes needed due to small table size
+
+### Announcers
+People who call/announce games.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| announcer_id | INTEGER | Primary key (auto-increment) | 1 |
+| espn_id | VARCHAR | ESPN's identifier | 5678 |
+| first_name | VARCHAR | First name | Jim |
+| last_name | VARCHAR | Last name | Nantz |
+| full_name | VARCHAR | Full name | Jim Nantz |
+| role | VARCHAR | Announcer role | Play-by-play |
+| bio | VARCHAR | Short biography | CBS Sports lead announcer |
+| headshot_url | VARCHAR | URL to headshot image | https://example.com/announcers/nantz.jpg |
+| active | BOOLEAN | If currently active | true |
+
+**Indexing:**
+- Create index on `last_name, first_name` for name lookups:
+  ```sql
+  CREATE INDEX idx_announcers_name ON Announcers(last_name, first_name);
+  ```
+
+### EventBroadcasts
+Broadcasts linked to specific events.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| broadcast_id | INTEGER | Primary key (auto-increment) | 1 |
+| event_id | INTEGER | Foreign key to events | 1 |
+| network_id | INTEGER | Foreign key to networks | 1 |
+| market_id | INTEGER | Foreign key to broadcast markets | 1 |
+| type | VARCHAR | Broadcast type | TV |
+| language | VARCHAR | Broadcast language | en |
+| start_time | TIMESTAMP | Scheduled start time | 2024-01-10T23:30Z |
+| end_time | TIMESTAMP | Scheduled end time | 2024-01-11T01:30Z |
+| broadcast_name | VARCHAR | Specific broadcast name | College Basketball |
+| channel_number | VARCHAR | Channel number | 610 |
+| is_national | BOOLEAN | If nationally televised | true |
+| is_home_broadcast | BOOLEAN | If favoring home team | false |
+| tape_delayed | BOOLEAN | If not live | false |
+| region_restriction | VARCHAR | Regional blackout info | NULL |
+| stream_url | VARCHAR | URL to stream (if applicable) | NULL |
+
+**Indexing:**
+- Order by `event_id, type` to group broadcasts by type per event
+- Create index for network-specific queries:
+  ```sql
+  CREATE INDEX idx_event_broadcasts_network ON EventBroadcasts(network_id, start_time);
+  ```
+
+### BroadcastAnnouncers
+Links announcers to specific broadcasts with their roles.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| broadcast_announcer_id | INTEGER | Primary key (auto-increment) | 1 |
+| broadcast_id | INTEGER | Foreign key to event broadcasts | 1 |
+| announcer_id | INTEGER | Foreign key to announcers | 1 |
+| role | VARCHAR | Role for this broadcast | Play-by-play |
+| order_num | INTEGER | Display/priority order | 1 |
+| is_primary | BOOLEAN | If primary announcer | true |
+| is_sideline | BOOLEAN | If sideline reporter | false |
+| notes | VARCHAR | Any specific notes | Guest analyst |
+
+**Indexing:**
+- Order by `broadcast_id, order_num` to maintain crew order
+- No explicit indexes needed beyond this ordering
+
+### BroadcastRatings
+Viewership and ratings data for broadcasts.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| rating_id | INTEGER | Primary key (auto-increment) | 1 |
+| broadcast_id | INTEGER | Foreign key to broadcasts | 1 |
+| rating_type | VARCHAR | Type of rating | Nielsen |
+| rating_value | DECIMAL | Rating number | 2.4 |
+| viewers | INTEGER | Number of viewers (thousands) | 1250 |
+| share | DECIMAL | Market share percentage | 5.2 |
+| demographic | VARCHAR | Target demographic | P18-49 |
+| time_slot | VARCHAR | Broadcasting time slot | Primetime |
+| competing_events | VARCHAR | JSON array of competing broadcasts | [{"sport": "NBA", "rating": 3.1}] |
+| notes | VARCHAR | Additional context | Conference rivalry game |
+
+**Indexing:**
+- Order by `broadcast_id, rating_type` for easy lookups
+- Create index for high-rated broadcasts:
+  ```sql
+  CREATE INDEX idx_broadcast_ratings_value ON BroadcastRatings(rating_value DESC);
   ```
 
 ## Materialized Views
@@ -748,35 +935,152 @@ Since DuckDB indexes can consume significant memory that is not automatically bu
 | Box Scores | Added | Period-by-period scoring |
 | Shot Charts | Added | Spatial shot data |
 | Indexing | Added | DuckDB-specific indexing strategy defined |
+| Ranking Systems | Added | Complete poll data structures |
+| Awards & Honors | Added | Award categories and recipients |
+| Broadcast Data | Added | Networks, markets, and broadcast details |
 
 ## Next Steps
 
-1. ✅ Refine the granularity of statistical data based on detailed endpoint study
-2. ✅ Determine appropriate indexing strategy
-3. Add Rankings entities to capture all ranking systems and historical team rankings
-   - Create `RankingSystems` table for AP Poll, Coaches Poll, etc.
-   - Implement `TeamRankings` table to track positions over time
-4. Add Awards and Honors data structures
-   - Develop `AwardCategories` table for different awards (Player of Year, etc.)
-   - Create `AwardRecipients` table to track winners by season
-5. Extend Event data with broadcast information
-   - Capture networks, broadcast markets, announcers, etc.
-6. Implement Tournament structure modeling
-   - Add tables for brackets, regions, seeds, and tournament progression
-7. Add media resource tracking for logos, headshots, and other media
-8. Develop reference resolution strategy for ESPN's `$ref` fields in the API
-9. Ensure consistent UTC time handling for all temporal data
-10. Create event status history tracking
-11. Add officials/referees and betting odds data structures
-12. Implement venue capacity and attendance percentage tracking
-13. Develop extraction and data loading process
-14. Establish data refresh patterns (incremental vs. full)
-15. Create view layer for simplified analytics access
-16. Consider partitioning strategy for historical data
-17. Develop approach for derived/calculated statistics
-18. Create test queries for common analytical scenarios
-19. Implement team conference alignment history tracking
-20. Develop memory management routines for DuckDB indexes
+### High Priority
+1. **Implement Play-by-Play Data Structure**
+   - Create `PlayEvents` table for individual play actions
+   - Add `PlayTypes` dimension table for categorizing plays (shot, foul, etc.)
+   - Develop `PlayParticipants` table to track actors in each play
+   - Include spatial coordinates for play locations
+
+2. **Develop Tournament Structure Modeling**
+   - Add tables for brackets, regions, and pods
+   - Implement seed tracking and advancement history
+   - Create tournament-specific metadata tables
+   - Model tournament eligibility and selection criteria
+
+3. **Add Officials/Referees Data Structure**
+   - Create `Officials` table for referee information
+   - Develop `EventOfficials` join table to link officials to games
+   - Track historical officiating assignments and tendencies
+   - Include role designations (head referee, etc.)
+
+4. **Create Shot Charts and Spatial Analysis Structure**
+   - Implement `ShotCharts` table with x/y coordinates
+   - Add made/missed, distance, and points metadata
+   - Include assist tracking for made baskets
+   - Support spatial analysis queries
+
+5. **Add Coaching Staff Data Structure**
+   - Create `Coaches` dimension table with biographical information
+   - Implement `TeamCoaches` relationship table with roles
+   - Track coaching history and tenure
+   - Include assistant coaches and staff roles
+
+### Medium Priority
+6. **Implement Betting Odds Structure**
+   - Create tables for pre-game odds and lines
+   - Track line movements over time
+   - Include over/under and point spread data
+   - Store odds provider information
+
+7. **Develop Injury Tracking System**
+   - Implement `Injuries` table with injury types and severity
+   - Create `AthleteInjuries` table linking injuries to players
+   - Track timelines, return dates, and status updates
+   - Support historical injury analysis
+
+8. **Implement Media Resource Tracking**
+   - Create `MediaResources` table for logos, headshots, and venue images
+   - Develop metadata for image dimensions and types
+   - Track resource currency and updates
+   - Include alt text and accessibility information
+
+9. **Create Event Status History Tracking**
+   - Implement temporal tracking of game status changes
+   - Store clock, period, and status type information
+   - Support timeline reconstruction
+   - Include status change reasons
+
+10. **Develop Reference Resolution Strategy**
+    - Create approach for handling ESPN API's `$ref` fields
+    - Implement reference caching mechanisms
+    - Establish rules for reference staleness
+    - Develop hierarchical resolution patterns
+
+### Lower Priority
+11. **Add News/Headlines/Notes Structure**
+    - Create `News` table for articles and stories
+    - Implement `EventHeadlines` for game-specific headlines
+    - Track news sources and publication timestamps
+    - Include relevance scores and categorization
+
+12. **Ensure Consistent UTC Time Handling**
+    - Standardize all temporal fields in UTC
+    - Implement display time zone conversion
+    - Create timestamp precision standards
+    - Ensure date range query optimization
+
+13. **Add Venue Capacity and Attendance Tracking**
+    - Enhance `Venues` table with detailed capacity information
+    - Add historical attendance tracking
+    - Calculate attendance percentages
+    - Include venue configuration information
+
+14. **Establish Data Refresh Patterns**
+    - Define incremental vs. full refresh strategies
+    - Create data freshness metadata tracking
+    - Implement priority-based update scheduling
+    - Develop change detection mechanisms
+
+15. **Create View Layer for Analytics**
+    - Develop materialized views for common analytical patterns
+    - Create data marts for specific analysis domains
+    - Implement role-based access controls
+    - Support visualization-friendly data structures
+
+16. **Consider Partitioning Strategy**
+    - Implement partitioning for large historical tables
+    - Develop season-based partitioning scheme
+    - Create hot/cold data management strategy
+    - Optimize partition sizes for DuckDB
+
+17. **Develop Approach for Derived Statistics**
+    - Create calculation methodology documentation
+    - Implement derived statistic triggers or procedures
+    - Establish calculation provenance tracking
+    - Develop statistic version control
+
+18. **Create Test Queries for Analytics**
+    - Develop benchmark query suite
+    - Create validation test cases
+    - Implement performance testing framework
+    - Document common analytical patterns
+
+19. **Implement Team Conference Alignment History**
+    - Track historical conference membership
+    - Create effective dating for alignment changes
+    - Support realignment analysis
+    - Include division classification history
+
+20. **Develop Memory Management Routines**
+    - Create scheduled database detach/reattach jobs
+    - Implement index usage monitoring
+    - Develop memory pressure handling
+    - Create index rebuild optimization
+
+21. **Add Alternate Names and Identifiers**
+    - Create historical name tracking for teams/venues
+    - Implement external ID mapping system
+    - Support alias resolution
+    - Track brand changes and renamings
+
+22. **Develop Game Highlight Structure**
+    - Create `Highlights` table for key moments
+    - Link highlights to plays and athletes
+    - Include media references and timestamps
+    - Support highlight categorization
+
+23. **Implement Records and Milestones Tracking**
+    - Track team and player records
+    - Create milestone achievement history
+    - Implement record-breaking detection
+    - Support historical significance scoring
 
 ## Technical Considerations
 
