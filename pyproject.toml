@@ -1,0 +1,9 @@
+[project]
+name = "espn-api-docs"
+version = "0.1.0"
+description = "ESPN API Docs"
+requires-python = ">=3.12, <3.13"
+dependencies = [
+    "mkdocs-material>=9.6.9",
+    "mkdocs-minify-plugin>=0.8.0",
+]
