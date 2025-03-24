@@ -84,6 +84,20 @@ Our normalized structure uses the following principles:
   │
   ↓
 [SHOT_CHARTS] ←→ [COURT_ZONES] ←→ [SHOT_LOCATIONS]
+
+[COACHES] ←→ [COACH_ROLES]
+   ↑            ↑
+   │            │
+   ↓            ↓
+[TEAM_COACHES] ←→ [COACHING_STAFF]
+   ↑                  ↑
+   │                  │
+   ↓                  ↓
+[COACH_CAREER_HISTORY] ←→ [COACH_SEASON_STATISTICS]
+   ↑
+   │
+   ↓
+[COACHING_TREES] ←→ [COACHING_TREE_MEMBERS]
 ```
 
 ## Documentation Sections
@@ -96,6 +110,7 @@ Our normalized structure uses the following principles:
 * [Awards Data Structure](awards-structure.md): Tables for awards and honors
 * [Broadcast Data Structure](broadcast-structure.md): Tables for broadcast information
 * [Officials/Referees Data Structure](officials-structure.md): Tables for officiating data
+* [Coaching Staff Data Structure](coaching-staff-structure.md): Tables for coaching personnel and staff
 * [Shot Charts and Spatial Analysis](shot-charts.md): Tables for spatial shot data and analysis
 * [Play-by-Play Data Structure](play-by-play.md): Tables for detailed play-by-play information
 * [Tournament Structure](tournament-structure.md): Tables for tournament data and bracket information
