@@ -753,16 +753,47 @@ Since DuckDB indexes can consume significant memory that is not automatically bu
 
 1. ✅ Refine the granularity of statistical data based on detailed endpoint study
 2. ✅ Determine appropriate indexing strategy
-3. Develop extraction and data loading process
-4. Establish data refresh patterns (incremental vs. full)
-5. Create view layer for simplified analytics access
-6. Consider partitioning strategy for historical data
-7. Develop approach for derived/calculated statistics
-8. Create test queries for common analytical scenarios
+3. Add Rankings entities to capture all ranking systems and historical team rankings
+   - Create `RankingSystems` table for AP Poll, Coaches Poll, etc.
+   - Implement `TeamRankings` table to track positions over time
+4. Add Awards and Honors data structures
+   - Develop `AwardCategories` table for different awards (Player of Year, etc.)
+   - Create `AwardRecipients` table to track winners by season
+5. Extend Event data with broadcast information
+   - Capture networks, broadcast markets, announcers, etc.
+6. Implement Tournament structure modeling
+   - Add tables for brackets, regions, seeds, and tournament progression
+7. Add media resource tracking for logos, headshots, and other media
+8. Develop reference resolution strategy for ESPN's `$ref` fields in the API
+9. Ensure consistent UTC time handling for all temporal data
+10. Create event status history tracking
+11. Add officials/referees and betting odds data structures
+12. Implement venue capacity and attendance percentage tracking
+13. Develop extraction and data loading process
+14. Establish data refresh patterns (incremental vs. full)
+15. Create view layer for simplified analytics access
+16. Consider partitioning strategy for historical data
+17. Develop approach for derived/calculated statistics
+18. Create test queries for common analytical scenarios
+19. Implement team conference alignment history tracking
+20. Develop memory management routines for DuckDB indexes
+
+## Technical Considerations
+
+1. Reference Resolution: Create a strategy to properly resolve ESPN API's `$ref` fields into normalized database entities.
+2. Temporal Data Management: Enforce consistent UTC time formatting for all date/time fields to support historical analysis.
+3. Memory Management: Implement regular maintenance routines to manage DuckDB's memory usage for indexes.
+4. Data Synchronization: Design pipelines to handle real-time updates during active game periods.
+5. Data Retention: Define policies for historical data retention and archiving strategies.
+6. API Rate Limiting: Implement request throttling to respect ESPN's API rate limits.
+7. Error Handling: Develop robust error handling for API unavailability or schema changes.
 
 ## Open Questions
 
 - How should we handle very sparse statistical fields that only apply to certain athletes or game situations?
 - What is the best storage format for historical time-series analysis of player development?
 - Should we implement a separate star schema for analytical queries on top of this normalized structure?
-- How frequently should aggregate statistics be recalculated? 
+- How frequently should aggregate statistics be recalculated?
+- What is the optimal backup strategy for a DuckDB-based analytics database?
+- How should we handle ESPN API schema changes or deprecations?
+- What is the proper approach for handling team identity changes (rebrands, relocations) over time? 
