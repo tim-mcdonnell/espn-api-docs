@@ -112,6 +112,7 @@ Our normalized structure uses the following principles:
 * [Core Relationship Tables](core-relationships.md): Tables that define relationships between core entities
 * [Core Fact Tables](core-facts.md): Tables that store event data and performance metrics
 * [Statistical Data Structure](statistics-structure.md): Tables for storing and organizing statistical data
+* [Team Performance Metrics](team-performance-metrics.md): Framework for advanced team efficiency and comparison metrics
 * [Rankings Data Structure](rankings-structure.md): Tables for tracking rankings and polls
 * [Awards Data Structure](awards-structure.md): Tables for awards and honors
 * [Broadcast Data Structure](broadcast-structure.md): Tables for broadcast information
