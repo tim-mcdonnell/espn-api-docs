@@ -1,67 +1,132 @@
-site_name: NCAA Men's Basketball API Documentation from ESPN
-site_description: Documentation for the ESPN v2 API for NCAA Men's Basketball
+site_name: "ESPN API Documentation - NCAA Men's Basketball"
+site_description: "Comprehensive documentation for ESPN's NCAA Men's Basketball API"
+site_author: "ESPN API Team"
+site_url: "https://developer.espn.com/docs/basketball/mens-college"
 
 # Repository
-repo_name: espn-api-docs
-repo_url: https://github.com/tim-mcdonnell/espn-api-docs
+repo_name: "ESPN Men's Basketball API"
+repo_url: "https://github.com/espn/basketball-api-docs"
 
-# Configuration
+# Copyright
+copyright: "Copyright &copy; 2024 ESPN Inc."
+
+# Theme Configuration
 theme:
   name: material
+  language: en
+  palette:
+    primary: indigo
+    accent: red
+  font:
+    text: Roboto
+    code: Roboto Mono
   features:
     - navigation.tabs
     - navigation.sections
-    - navigation.expand
-    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - content.code.annotate
+    - navigation.path
+    - navigation.footer
+    - toc.follow
     - search.suggest
     - search.highlight
-    - content.tabs.link
-  palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/toggle-switch-off-outline
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/toggle-switch
-        name: Switch to light mode
-  icon:
-    repo: fontawesome/brands/github
 
-# Extensions
+# Markdown Extensions
 markdown_extensions:
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
   - admonition
-  - pymdownx.details
-  - tables
   - footnotes
+  - attr_list
+  - md_in_html
+  - def_list
+  - tables
+  - abbr
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      use_pygments: true
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: espn
+      repo: basketball-api-docs
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - toc:
+      permalink: true
+      toc_depth: 3
 
-# Page tree
+# Navigation Structure
 nav:
   - Home: index.md
-  - Season Endpoints: season_endpoints.md
-  - Team Endpoints: team_endpoints.md
-  - Athlete Endpoints: athlete_endpoints.md
-  - Event Endpoints: event_endpoints.md
-  - Data Structures: data_structures.md
+  - Endpoints:
+    - Overview: endpoints/index.md
+    - Athletes: endpoints/athletes.md
+    - Events: endpoints/events.md
+    - Teams: endpoints/teams.md
+    - Seasons: endpoints/seasons.md
+    - Rankings: endpoints/rankings.md
+    - Awards: endpoints/awards.md
+  - Reference:
+    - Data Structures: reference/data-structures.md
+    - Query Parameters: reference/query-parameters.md
+    - Status Codes: reference/status-codes.md
+  - Guides:
+    - Overview: guides/index.md
+    - Getting Started: guides/getting-started.md
+    - Authentication: guides/authentication.md
+    - Rate Limiting: guides/rate-limiting.md
+    - Best Practices: guides/best-practices.md
 
 # Plugins
 plugins:
   - search
   - minify:
-      minify_html: true 
+      minify_html: true
+      minify_js: true
+      minify_css: true
+      htmlmin_opts:
+        remove_comments: true
+
+# Additional Settings
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/espn/basketball-api-docs
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/ESPNDev
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+  consent:
+    title: Cookie consent
+    description: >- 
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
+
+# Custom CSS
+extra_css:
+  - assets/stylesheets/extra.css 
