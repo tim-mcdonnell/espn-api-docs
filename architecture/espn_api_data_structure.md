@@ -829,6 +829,312 @@ Viewership and ratings data for broadcasts.
   CREATE INDEX idx_broadcast_ratings_value ON BroadcastRatings(rating_value DESC);
   ```
 
+## Play-by-Play Data Structure
+
+The Play-by-Play Data Structure extends our normalized database to capture detailed event timelines, providing play-by-play information for each game. This enables advanced analysis of game flow, player performance in specific situations, and detailed event reconstruction.
+
+### PlayTypes
+Categorizes different types of basketball plays.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| play_type_id | INTEGER | Primary key (auto-increment) | 1 |
+| espn_id | VARCHAR | ESPN's identifier | 404 |
+| name | VARCHAR | Play type name | Missed Jump Shot |
+| abbreviation | VARCHAR | Standard abbreviation | MISSJUMP |
+| description | VARCHAR | Description of play type | Player attempted but missed a jump shot |
+| category | VARCHAR | General category | Shot |
+| is_scoring_play | BOOLEAN | If play can result in points | true |
+| points_possible | INTEGER | Maximum points possible | 3 |
+| related_stat_type_id | INTEGER | Foreign key to stat types | 21 |
+
+**Indexing:**
+- Create explicit index on `espn_id` for API integration:
+  ```sql
+  CREATE INDEX idx_play_types_espn_id ON PlayTypes(espn_id);
+  ```
+- Order by `category, name` to group related play types together
+
+### Plays
+The core table storing individual plays within games.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| play_id | INTEGER | Primary key (auto-increment) | 1 |
+| espn_id | VARCHAR | ESPN's identifier | 401524661:2 |
+| event_id | INTEGER | Foreign key to events | 1 |
+| sequence_number | INTEGER | Order of play within game | 2 |
+| play_type_id | INTEGER | Foreign key to play types | 1 |
+| team_id | INTEGER | Foreign key to team performing action | 1 |
+| period | INTEGER | Game period (1=1st half, 2=2nd half) | 1 |
+| clock_time | VARCHAR | Game clock at time of play | 19:36 |
+| clock_seconds_remaining | INTEGER | Seconds remaining in period | 1176 |
+| wallclock | TIMESTAMP | Real-world timestamp | 2024-01-10T00:00:24Z |
+| text | VARCHAR | Description of the play | Brice Williams missed Three Point Jumper |
+| score_value | INTEGER | Points scored on the play | 0 |
+| home_score | INTEGER | Home team score after play | 0 |
+| away_score | INTEGER | Away team score after play | 0 |
+| score_differential | INTEGER | Score differential after play | 0 |
+| win_probability | DECIMAL | Win probability after play | 0.52 |
+| possession_prior | INTEGER | Team ID with possession before play | 1 |
+| possession_after | INTEGER | Team ID with possession after play | 2 |
+| scoring_play | BOOLEAN | If points were scored | false |
+| shot_type | VARCHAR | Type of shot if applicable | Three Point Jumper |
+| shot_made | BOOLEAN | If shot was made | false |
+| assist | BOOLEAN | If play was an assist | false |
+| turnover | BOOLEAN | If play was a turnover | false |
+| foul | BOOLEAN | If play was a foul | false |
+| timeout | BOOLEAN | If play was a timeout | false |
+| coordinates_x | DECIMAL | X coordinate of play on court | 23.5 |
+| coordinates_y | DECIMAL | Y coordinate of play on court | 7.2 |
+| is_timeout | BOOLEAN | If play represents a timeout | false |
+| timeout_team | INTEGER | Team calling timeout | NULL |
+| timeout_type | VARCHAR | Type of timeout | NULL |
+| fastbreak | BOOLEAN | If play occurred in fastbreak | false |
+| second_chance | BOOLEAN | If play was a second chance opportunity | false |
+| paint | BOOLEAN | If play occurred in the paint | false |
+
+**Indexing:**
+- Order by `event_id, sequence_number` to optimize chronological querying
+- Create explicit indexes for common query patterns:
+  ```sql
+  CREATE INDEX idx_plays_event ON Plays(event_id);
+  CREATE INDEX idx_plays_team ON Plays(team_id, event_id);
+  CREATE INDEX idx_plays_scoring ON Plays(event_id) WHERE scoring_play = true;
+  CREATE INDEX idx_plays_period_end ON Plays(event_id, period) WHERE clock_seconds_remaining < 60;
+  ```
+
+### PlayParticipants
+Links athletes to specific plays with their roles.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| play_participant_id | INTEGER | Primary key (auto-increment) | 1 |
+| play_id | INTEGER | Foreign key to plays | 1 |
+| athlete_id | INTEGER | Foreign key to athletes | 1 |
+| team_id | INTEGER | Foreign key to teams | 1 |
+| role | VARCHAR | Role in the play | shooter |
+| primary_participant | BOOLEAN | If athlete is primary actor | true |
+| stat_value | INTEGER | Statistical value for participant | 1 |
+| stat_type_id | INTEGER | Foreign key to stat types | 1 |
+| jersey | VARCHAR | Jersey number during play | 15 |
+
+**Indexing:**
+- Order by `play_id, primary_participant DESC` to prioritize primary participants
+- Create indexes for common analysis queries:
+  ```sql
+  CREATE INDEX idx_play_participants_athlete ON PlayParticipants(athlete_id, team_id);
+  CREATE INDEX idx_play_participants_role ON PlayParticipants(role, play_id);
+  ```
+
+### PlayStreaks
+Tracks significant streaks within games.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| streak_id | INTEGER | Primary key (auto-increment) | 1 |
+| event_id | INTEGER | Foreign key to events | 1 |
+| start_play_id | INTEGER | Foreign key to starting play | 10 |
+| end_play_id | INTEGER | Foreign key to ending play | 20 |
+| team_id | INTEGER | Foreign key to team | 1 |
+| streak_type | VARCHAR | Type of streak | scoring_run |
+| value | INTEGER | Numeric value of streak | 10 |
+| start_period | INTEGER | Period when streak started | 1 |
+| end_period | INTEGER | Period when streak ended | 1 |
+| start_time | VARCHAR | Game clock when streak started | 12:45 |
+| end_time | VARCHAR | Game clock when streak ended | 10:23 |
+| home_score_start | INTEGER | Home score at streak start | 5 |
+| away_score_start | INTEGER | Away score at streak start | 8 |
+| home_score_end | INTEGER | Home score at streak end | 15 |
+| away_score_end | INTEGER | Away score at streak end | 8 |
+| seconds_elapsed | INTEGER | Real-time seconds elapsed | 142 |
+
+**Indexing:**
+- Order by `event_id, start_play_id` for chronological ordering
+- Create index for significant streaks:
+  ```sql
+  CREATE INDEX idx_play_streaks_value ON PlayStreaks(event_id, value DESC);
+  ```
+
+### GameFlowMetrics
+Stores derived metrics about game flow and momentum.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| metric_id | INTEGER | Primary key (auto-increment) | 1 |
+| event_id | INTEGER | Foreign key to events | 1 |
+| period | INTEGER | Game period | 1 |
+| minute_segment | INTEGER | Minute of game (bucketed) | 5 |
+| team_id | INTEGER | Foreign key to teams | 1 |
+| metric_type | VARCHAR | Type of metric | momentum_score |
+| metric_value | DECIMAL | Value of the metric | 0.75 |
+| score_differential | INTEGER | Score differential | 7 |
+| lead_changes | INTEGER | Lead changes in segment | 2 |
+| largest_lead | INTEGER | Largest lead in segment | 8 |
+| efficiency_rating | DECIMAL | Offensive efficiency | 1.2 |
+| possessions | INTEGER | Possession count | 5 |
+| points_per_possession | DECIMAL | Points per possession | 1.4 |
+| fast_break_points | INTEGER | Fast break points | 6 |
+| second_chance_points | INTEGER | Second chance points | 2 |
+| points_in_paint | INTEGER | Points in the paint | 8 |
+| points_off_turnovers | INTEGER | Points off turnovers | 4 |
+
+**Indexing:**
+- Order by `event_id, period, minute_segment` for time-series analysis
+- Create index for team-specific queries:
+  ```sql
+  CREATE INDEX idx_game_flow_team ON GameFlowMetrics(team_id, event_id);
+  ```
+
+### GameSegments
+Defines significant game segments for analysis.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| segment_id | INTEGER | Primary key (auto-increment) | 1 |
+| event_id | INTEGER | Foreign key to events | 1 |
+| segment_type | VARCHAR | Type of segment | crunch_time |
+| start_play_id | INTEGER | Foreign key to starting play | 280 |
+| end_play_id | INTEGER | Foreign key to ending play | 304 |
+| start_period | INTEGER | Period when segment started | 2 |
+| end_period | INTEGER | Period when segment ended | 2 |
+| start_time | VARCHAR | Game clock when segment started | 5:00 |
+| end_time | VARCHAR | Game clock when segment ended | 0:00 |
+| home_score_start | INTEGER | Home score at segment start | 70 |
+| away_score_start | INTEGER | Away score at segment start | 68 |
+| home_score_end | INTEGER | Home score at segment end | 82 |
+| away_score_end | INTEGER | Away score at segment end | 75 |
+| description | VARCHAR | Description of segment | Final five minutes |
+| significance | INTEGER | Significance score (1-10) | 9 |
+
+**Indexing:**
+- Order by `event_id, segment_type` to group related segments
+- Create index for significant segments:
+  ```sql
+  CREATE INDEX idx_game_segments_significance ON GameSegments(event_id, significance DESC);
+  ```
+
+### PlaysTagMap
+Provides a flexible tagging system for plays.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| plays_tag_id | INTEGER | Primary key (auto-increment) | 1 |
+| play_id | INTEGER | Foreign key to plays | 1 |
+| tag | VARCHAR | Tag applied to play | clutch |
+| tag_category | VARCHAR | Category of tag | significance |
+| tag_value | DECIMAL | Numeric value if applicable | 0.9 |
+
+**Indexing:**
+- Order by `play_id, tag_category, tag` for efficient play retrieval
+- Create index for specific tag queries:
+  ```sql
+  CREATE INDEX idx_plays_tag_map_tag ON PlaysTagMap(tag, tag_category);
+  ```
+
+## Materialized Views for Play-by-Play Analysis
+
+For efficient analysis of play-by-play data, we recommend creating these materialized views:
+
+```sql
+-- Game momentum analysis
+CREATE MATERIALIZED VIEW game_momentum AS
+SELECT 
+    e.event_id,
+    e.name AS event_name,
+    e.start_date AS game_date,
+    p.sequence_number,
+    p.period,
+    p.clock_time,
+    p.text AS play_description,
+    th.display_name AS home_team,
+    ta.display_name AS away_team,
+    p.home_score,
+    p.away_score,
+    p.score_differential,
+    p.win_probability,
+    CASE WHEN p.team_id = te.home_team_id THEN 'home' ELSE 'away' END AS team_type,
+    t.display_name AS acting_team,
+    pt.name AS play_type,
+    CASE 
+        WHEN LAG(p.win_probability) OVER(PARTITION BY p.event_id ORDER BY p.sequence_number) IS NULL THEN 0
+        ELSE p.win_probability - LAG(p.win_probability) OVER(PARTITION BY p.event_id ORDER BY p.sequence_number)
+    END AS win_prob_change
+FROM 
+    Plays p
+JOIN PlayTypes pt ON p.play_type_id = pt.play_type_id
+JOIN Events e ON p.event_id = e.event_id
+JOIN TeamEvents te ON e.event_id = te.event_id
+JOIN Teams t ON p.team_id = t.team_id
+JOIN Teams th ON te.team_id = th.team_id AND te.home_away = 'home'
+JOIN Teams ta ON te.team_id = ta.team_id AND te.home_away = 'away'
+ORDER BY 
+    e.event_id, p.sequence_number;
+
+-- Player play-by-play contribution
+CREATE MATERIALIZED VIEW player_play_contribution AS
+SELECT 
+    pp.play_id,
+    p.event_id,
+    p.sequence_number,
+    p.period,
+    p.clock_time,
+    p.text AS play_description,
+    a.full_name AS athlete_name,
+    t.display_name AS team_name,
+    pp.role,
+    pt.name AS play_type,
+    p.score_value,
+    st.name AS stat_type,
+    pp.stat_value,
+    p.scoring_play,
+    p.coordinates_x,
+    p.coordinates_y
+FROM 
+    PlayParticipants pp
+JOIN Plays p ON pp.play_id = p.play_id
+JOIN Athletes a ON pp.athlete_id = a.athlete_id
+JOIN Teams t ON pp.team_id = t.team_id
+JOIN PlayTypes pt ON p.play_type_id = pt.play_type_id
+LEFT JOIN StatTypes st ON pp.stat_type_id = st.stat_type_id
+ORDER BY 
+    p.event_id, p.sequence_number, pp.primary_participant DESC;
+
+-- Shot chart data
+CREATE MATERIALIZED VIEW shot_chart_data AS
+SELECT 
+    p.play_id,
+    p.event_id,
+    p.sequence_number,
+    e.name AS event_name,
+    e.start_date AS game_date,
+    p.period,
+    p.clock_time,
+    a.full_name AS athlete_name,
+    t.display_name AS team_name,
+    p.shot_type,
+    p.shot_made,
+    p.score_value,
+    p.coordinates_x,
+    p.coordinates_y,
+    SQRT(POW(p.coordinates_x, 2) + POW(p.coordinates_y, 2)) AS shot_distance,
+    CASE
+        WHEN p.coordinates_x BETWEEN -8 AND 8 AND p.coordinates_y BETWEEN 0 AND 19 THEN 'paint'
+        WHEN SQRT(POW(p.coordinates_x, 2) + POW(p.coordinates_y, 2)) > 23.75 THEN 'three_point'
+        ELSE 'mid_range'
+    END AS shot_zone
+FROM 
+    Plays p
+JOIN Events e ON p.event_id = e.event_id
+JOIN PlayParticipants pp ON p.play_id = pp.play_id AND pp.role = 'shooter'
+JOIN Athletes a ON pp.athlete_id = a.athlete_id
+JOIN Teams t ON pp.team_id = t.team_id
+WHERE 
+    p.play_type_id IN (SELECT play_type_id FROM PlayTypes WHERE category = 'Shot')
+ORDER BY 
+    e.start_date, p.event_id, p.sequence_number;
+```
+
 ## Materialized Views
 
 For common analytical queries, we recommend creating materialized views to improve performance:
@@ -931,7 +1237,7 @@ Since DuckDB indexes can consume significant memory that is not automatically bu
 | Events | Mapped | Basic structure established |
 | Rankings | Mapped | Basic structure established |
 | Statistics | Refined | Enhanced with detailed dimensions and facts |
-| Play-by-Play | Added | Detailed event timeline data |
+| Play-by-Play | Implemented | Complete data structure with plays, participants, streaks and game flow |
 | Box Scores | Added | Period-by-period scoring |
 | Shot Charts | Added | Spatial shot data |
 | Indexing | Added | DuckDB-specific indexing strategy defined |
@@ -942,141 +1248,134 @@ Since DuckDB indexes can consume significant memory that is not automatically bu
 ## Next Steps
 
 ### High Priority
-1. **Implement Play-by-Play Data Structure**
-   - Create `PlayEvents` table for individual play actions
-   - Add `PlayTypes` dimension table for categorizing plays (shot, foul, etc.)
-   - Develop `PlayParticipants` table to track actors in each play
-   - Include spatial coordinates for play locations
-
-2. **Develop Tournament Structure Modeling**
+1. **Develop Tournament Structure Modeling**
    - Add tables for brackets, regions, and pods
    - Implement seed tracking and advancement history
    - Create tournament-specific metadata tables
    - Model tournament eligibility and selection criteria
 
-3. **Add Officials/Referees Data Structure**
+2. **Add Officials/Referees Data Structure**
    - Create `Officials` table for referee information
    - Develop `EventOfficials` join table to link officials to games
    - Track historical officiating assignments and tendencies
    - Include role designations (head referee, etc.)
 
-4. **Create Shot Charts and Spatial Analysis Structure**
+3. **Create Shot Charts and Spatial Analysis Structure**
    - Implement `ShotCharts` table with x/y coordinates
    - Add made/missed, distance, and points metadata
    - Include assist tracking for made baskets
    - Support spatial analysis queries
 
-5. **Add Coaching Staff Data Structure**
+4. **Add Coaching Staff Data Structure**
    - Create `Coaches` dimension table with biographical information
    - Implement `TeamCoaches` relationship table with roles
    - Track coaching history and tenure
    - Include assistant coaches and staff roles
 
-### Medium Priority
-6. **Implement Betting Odds Structure**
+5. **Implement Betting Odds Structure**
    - Create tables for pre-game odds and lines
    - Track line movements over time
    - Include over/under and point spread data
    - Store odds provider information
 
-7. **Develop Injury Tracking System**
+### Medium Priority
+6. **Develop Injury Tracking System**
    - Implement `Injuries` table with injury types and severity
    - Create `AthleteInjuries` table linking injuries to players
    - Track timelines, return dates, and status updates
    - Support historical injury analysis
 
-8. **Implement Media Resource Tracking**
+7. **Implement Media Resource Tracking**
    - Create `MediaResources` table for logos, headshots, and venue images
    - Develop metadata for image dimensions and types
    - Track resource currency and updates
    - Include alt text and accessibility information
 
-9. **Create Event Status History Tracking**
+8. **Create Event Status History Tracking**
    - Implement temporal tracking of game status changes
    - Store clock, period, and status type information
    - Support timeline reconstruction
    - Include status change reasons
 
-10. **Develop Reference Resolution Strategy**
+9. **Develop Reference Resolution Strategy**
     - Create approach for handling ESPN API's `$ref` fields
     - Implement reference caching mechanisms
     - Establish rules for reference staleness
     - Develop hierarchical resolution patterns
 
-### Lower Priority
-11. **Add News/Headlines/Notes Structure**
+10. **Add News/Headlines/Notes Structure**
     - Create `News` table for articles and stories
     - Implement `EventHeadlines` for game-specific headlines
     - Track news sources and publication timestamps
     - Include relevance scores and categorization
 
-12. **Ensure Consistent UTC Time Handling**
+11. **Ensure Consistent UTC Time Handling**
     - Standardize all temporal fields in UTC
     - Implement display time zone conversion
     - Create timestamp precision standards
     - Ensure date range query optimization
 
-13. **Add Venue Capacity and Attendance Tracking**
+12. **Add Venue Capacity and Attendance Tracking**
     - Enhance `Venues` table with detailed capacity information
     - Add historical attendance tracking
     - Calculate attendance percentages
     - Include venue configuration information
 
-14. **Establish Data Refresh Patterns**
+13. **Establish Data Refresh Patterns**
     - Define incremental vs. full refresh strategies
     - Create data freshness metadata tracking
     - Implement priority-based update scheduling
     - Develop change detection mechanisms
 
-15. **Create View Layer for Analytics**
+14. **Create View Layer for Analytics**
     - Develop materialized views for common analytical patterns
     - Create data marts for specific analysis domains
     - Implement role-based access controls
     - Support visualization-friendly data structures
 
-16. **Consider Partitioning Strategy**
+15. **Consider Partitioning Strategy**
     - Implement partitioning for large historical tables
     - Develop season-based partitioning scheme
     - Create hot/cold data management strategy
     - Optimize partition sizes for DuckDB
 
-17. **Develop Approach for Derived Statistics**
+16. **Develop Approach for Derived Statistics**
     - Create calculation methodology documentation
     - Implement derived statistic triggers or procedures
     - Establish calculation provenance tracking
     - Develop statistic version control
 
-18. **Create Test Queries for Analytics**
+17. **Create Test Queries for Analytics**
     - Develop benchmark query suite
     - Create validation test cases
     - Implement performance testing framework
     - Document common analytical patterns
 
-19. **Implement Team Conference Alignment History**
+18. **Implement Team Conference Alignment History**
     - Track historical conference membership
     - Create effective dating for alignment changes
     - Support realignment analysis
     - Include division classification history
 
-20. **Develop Memory Management Routines**
+19. **Develop Memory Management Routines**
     - Create scheduled database detach/reattach jobs
     - Implement index usage monitoring
     - Develop memory pressure handling
     - Create index rebuild optimization
 
-21. **Add Alternate Names and Identifiers**
+20. **Add Alternate Names and Identifiers**
     - Create historical name tracking for teams/venues
     - Implement external ID mapping system
     - Support alias resolution
     - Track brand changes and renamings
 
-22. **Develop Game Highlight Structure**
+21. **Develop Game Highlight Structure**
     - Create `Highlights` table for key moments
     - Link highlights to plays and athletes
     - Include media references and timestamps
     - Support highlight categorization
 
-23. **Implement Records and Milestones Tracking**
+22. **Implement Records and Milestones Tracking**
     - Track team and player records
     - Create milestone achievement history
     - Implement record-breaking detection
