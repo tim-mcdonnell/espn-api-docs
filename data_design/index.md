@@ -98,6 +98,12 @@ Our normalized structure uses the following principles:
    │
    ↓
 [COACHING_TREES] ←→ [COACHING_TREE_MEMBERS]
+
+[ODDS_PROVIDERS] ←→ [EVENT_ODDS] ←→ [PROVIDER_EVENT_ODDS]
+                      ↑                ↑
+                      │                │
+                      ↓                ↓
+[FUTURES_MARKETS] ←→ [FUTURES_ODDS] ←→ [ODDS_MOVEMENT]
 ```
 
 ## Documentation Sections
@@ -114,6 +120,7 @@ Our normalized structure uses the following principles:
 * [Shot Charts and Spatial Analysis](shot-charts.md): Tables for spatial shot data and analysis
 * [Play-by-Play Data Structure](play-by-play.md): Tables for detailed play-by-play information
 * [Tournament Structure](tournament-structure.md): Tables for tournament data and bracket information
+* [Betting Odds Structure](betting-odds-structure.md): Tables for betting odds, lines, and sportsbook data
 * [Technical Implementation](technical-implementation.md): Database design considerations and implementation details
 * [Indexing Strategy](indexing-strategy.md): DuckDB-specific indexing approach
 * [Progress and Next Steps](progress-next-steps.md): Current progress and planned enhancements
