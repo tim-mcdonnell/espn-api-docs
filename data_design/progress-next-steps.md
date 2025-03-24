@@ -26,136 +26,8 @@ The following table summarizes the status of each major component of our data st
 | Shot Charts | Implemented | Complete spatial shot data structure with defensive tracking |
 | Indexing | Added | DuckDB-specific indexing strategy defined |
 | Ranking Systems | Added | Complete poll data structures |
-| Awards & Honors | Added | Award categories and recipients |
-| Broadcast Data | Added | Networks, markets, and broadcast details |
-| Officials & Referees | Added | Complete officiating structure with assignments, tendencies, and performance metrics |
-| Coaching Staff | Implemented | Complete coaching data structure with roles, history, and coaching trees |
 | Betting Odds | Implemented | Complete structure for pre-game odds, line movements, and provider tracking |
 | Team Performance Metrics | Implemented | Comprehensive framework for efficiency, tempo-free, and comparison metrics |
-
-## Next Steps
-
-Based on our current progress, we've identified several areas for future development. These are categorized by priority level.
-
-### High Priority
-
-1. **~~Implement Betting Odds Structure~~** ✓
-   - ~~Create tables for pre-game odds and lines~~
-   - ~~Track line movements over time~~
-   - ~~Include over/under and point spread data~~
-   - ~~Store odds provider information~~
-
-2. **~~Develop Team Performance Metrics Framework~~** ✓
-   - ~~Create advanced metrics calculation framework~~
-   - ~~Implement efficiency ratings and tempo-free statistics~~
-   - ~~Develop team comparison tools~~
-   - ~~Create visualization-ready data structures~~
-
-3. **~~Develop Injury Tracking System~~** ✓
-   - ~~Implement `Injuries` table with injury types and severity~~
-   - ~~Create `AthleteInjuries` table linking injuries to players~~
-   - ~~Track timelines, return dates, and status updates~~
-   - ~~Support historical injury analysis~~
-
-### Medium Priority
-
-4. **Implement Media Resource Tracking**
-   - Create `MediaResources` table for logos, headshots, and venue images
-   - Develop metadata for image dimensions and types
-   - Track resource currency and updates
-   - Include alt text and accessibility information
-
-5. **Create Event Status History Tracking**
-   - Implement temporal tracking of game status changes
-   - Store clock, period, and status type information
-   - Support timeline reconstruction
-   - Include status change reasons
-
-6. **Develop Reference Resolution Strategy**
-    - Create approach for handling ESPN API's `$ref` fields
-    - Implement reference caching mechanisms
-    - Establish rules for reference staleness
-    - Develop hierarchical resolution patterns
-
-7. **Add News/Headlines/Notes Structure**
-    - Create `News` table for articles and stories
-    - Implement `EventHeadlines` for game-specific headlines
-    - Track news sources and publication timestamps
-    - Include relevance scores and categorization
-
-### Lower Priority
-
-8. **Ensure Consistent UTC Time Handling**
-    - Standardize all temporal fields in UTC
-    - Implement display time zone conversion
-    - Create timestamp precision standards
-    - Ensure date range query optimization
-
-9. **Add Venue Capacity and Attendance Tracking**
-    - Enhance `Venues` table with detailed capacity information
-    - Add historical attendance tracking
-    - Calculate attendance percentages
-    - Include venue configuration information
-
-10. **Establish Data Refresh Patterns**
-    - Define incremental vs. full refresh strategies
-    - Create data freshness metadata tracking
-    - Implement priority-based update scheduling
-    - Develop change detection mechanisms
-
-11. **Create View Layer for Analytics**
-    - Develop materialized views for common analytical patterns
-    - Create data marts for specific analysis domains
-    - Implement role-based access controls
-    - Support visualization-friendly data structures
-
-12. **Consider Partitioning Strategy**
-    - Implement partitioning for large historical tables
-    - Develop season-based partitioning scheme
-    - Create hot/cold data management strategy
-    - Optimize partition sizes for DuckDB
-
-13. **Develop Approach for Derived Statistics**
-    - Create calculation methodology documentation
-    - Implement derived statistic triggers or procedures
-    - Establish calculation provenance tracking
-    - Develop statistic version control
-
-14. **Create Test Queries for Analytics**
-    - Develop benchmark query suite
-    - Create validation test cases
-    - Implement performance testing framework
-    - Document common analytical patterns
-
-15. **Implement Team Conference Alignment History**
-    - Track historical conference membership
-    - Create effective dating for alignment changes
-    - Support realignment analysis
-    - Include division classification history
-
-16. **Develop Memory Management Routines**
-    - Create scheduled database detach/reattach jobs
-    - Implement index usage monitoring
-    - Develop memory pressure handling
-    - Create index rebuild optimization
-
-17. **Add Alternate Names and Identifiers**
-    - Create historical name tracking for teams/venues
-    - Implement external ID mapping system
-    - Support alias resolution
-    - Track brand changes and renamings
-
-18. **Develop Game Highlight Structure**
-    - Create `Highlights` table for key moments
-    - Link highlights to plays and athletes
-    - Include media references and timestamps
-    - Support highlight categorization
-
-19. **Implement Records and Milestones Tracking**
-    - Track team and player records
-    - Create milestone achievement history
-    - Implement record-breaking detection
-    - Support historical significance scoring
 
 ## Technical Considerations
 
@@ -192,3 +64,67 @@ Several questions remain open and require further investigation:
 - How should we handle ESPN API schema changes or deprecations?
 
 - What is the proper approach for handling team identity changes (rebrands, relocations) over time?
+
+## Out of Scope Features
+
+The following features are available in the ESPN API but have been intentionally excluded from our data structure as they do not align with our current analytical goals:
+
+### Media Content and Rich Media
+
+- **Video Content References**: The API includes video content in event summaries, but storing these references adds complexity without analytical value.
+
+- **News Articles and Headlines**: While game headlines are captured in event data, full article content is not stored as it's primarily for display purposes.
+
+- **Image Management System**: Player headshots, venue images, and additional visual content references are not systematically stored beyond basic team logos needed for identification.
+
+### Web and Social Integration 
+
+- **Link Structure**: The API returns various web links for teams, events, and athletes, but these are primarily for UI navigation and not relevant for analysis.
+
+- **Social Media Content**: Any social media references or engagement metrics are not captured as they don't contribute to performance analytics.
+
+### Fan Engagement and User Data
+
+- **User-Generated Content**: Comments, ratings, or other user-generated content are not included in our data model.
+
+- **Attendance Trends**: While game attendance is stored as a basic fact, detailed attendance demographics and engagement patterns are not tracked.
+
+### Supplementary Content
+
+- **Generic Notes Structure**: The API's notes fields for various entities are selectively stored only when they contain analytically relevant information.
+
+- **Documentation References**: Links to rules, commentary, or background information are excluded.
+
+### Broadcast Information
+
+- **Network and Channel Data**: Television network, streaming platform, and broadcast channel information is not tracked due to limited predictive value.
+
+- **Broadcast Teams**: Commentator, analyst, and production team information does not provide analytical benefit for game outcome prediction.
+
+- **Regional Coverage**: Geographic broadcast restrictions and regional network information is excluded as it has no direct relation to game analysis.
+
+### Award Information
+
+- **Individual and Team Awards**: Player of the year, all-conference teams, and other achievement awards are excluded as they represent lagging indicators with minimal predictive value.
+
+- **Award Voting Details**: Voting breakdowns, voter affiliations, and historical award patterns are not stored.
+
+- **Award Ceremonies**: Information about when and where awards are presented holds no analytical value for game prediction.
+
+### Coaching Staff Information
+
+- **Coaching Hierarchies**: Assistant coach relationships, staff structure, and coaching trees are excluded as their impact is difficult to quantify in predictive models.
+
+- **Career Trajectories**: Historical coaching movement between programs does not offer significant predictive value.
+
+- **Coaching Statistics**: Win-loss records, championships, and other coaching accomplishments are only indirectly related to current team performance and are not included.
+
+### Officials and Referees Information
+
+- **Officiating Assignments**: Game official assignments and crew information is excluded as the impact on game outcomes is minimal and inconsistent.
+
+- **Officiating Tendencies**: Referee foul-calling tendencies and game management styles are not tracked due to their limited predictive value.
+
+- **Official Performance Metrics**: Metrics tracking official accuracy, consistency, and bias are excluded as they're not reliably available and offer limited analytical benefit.
+
+These items may be reconsidered in future iterations if analytical use cases emerge that require this data.

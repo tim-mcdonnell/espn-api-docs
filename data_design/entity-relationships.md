@@ -40,12 +40,6 @@ erDiagram
     AthleteStatistics }o--|| StatisticTypes : categorizes
     TeamStatistics }o--|| Teams : measures
     TeamStatistics }o--|| StatisticTypes : categorizes
-    
-    AwardCategories ||--o{ AwardRecipients : bestows
-    AwardRecipients }o--|| Athletes : honors
-    
-    Officials ||--o{ EventOfficials : assigns
-    EventOfficials }o--|| Events : officiates
 ```
 
 ## Primary Entity Groups
@@ -126,46 +120,6 @@ These entities track performance metrics:
 - Athlete and team statistics are always connected to specific events
 - Statistics are categorized by type and attach to either athletes or teams
 
-## Coaching Staff Entity Relationships
-
-The following diagram illustrates the relationships between coaching-related entities:
-
-```
-[COACHES] ←→ [COACH_ROLES]
-   ↑            ↑
-   │            │
-   ↓            ↓
-[TEAM_COACHES] ←→ [COACHING_STAFF]
-   ↑                  ↑
-   │                  │
-   ↓                  ↓
-[COACH_CAREER_HISTORY] ←→ [COACH_SEASON_STATISTICS]
-   ↑
-   │
-   ↓
-[COACHING_TREES] ←→ [COACHING_TREE_MEMBERS]
-```
-
-### Entity Descriptions
-
-- **Coaches**: Core dimension table storing biographical information about coaching personnel
-- **CoachRoles**: Dimension table defining coaching positions and hierarchy
-- **TeamCoaches**: Relationship table linking coaches to teams with specific roles
-- **CoachingStaff**: Table for non-coaching staff members (strength coaches, etc.)
-- **CoachCareerHistory**: Historical record of coaching tenures across franchises
-- **CoachSeasonStatistics**: Season-level performance statistics for coaches
-- **CoachingTrees**: Tracks coaching mentorship trees and lineages
-- **CoachingTreeMembers**: Maps coaches to their mentors and coaching lineage
-
-### Key Relationships
-
-1. A Coach can have multiple TeamCoaches records, representing different tenures
-2. CoachRoles define the position hierarchy within coaching staffs
-3. CoachCareerHistory provides a historical view of a coach's career progression
-4. CoachingTrees track the mentorship relationships between coaches
-5. TeamCoaches links coaches to specific teams during specific seasons
-6. CoachingStaff tracks non-coaching personnel associated with teams
-
 ## Detail-Level Relationships
 
 Beyond the high-level relationships, we maintain several important detail relationships:
@@ -176,7 +130,6 @@ Many relationships in sports data are temporal in nature:
 
 - **AthleteTeams**: Athletes change teams over time
 - **TeamConferences**: Teams change conference affiliations
-- **CoachingStaff**: Coaches change roles and teams
 
 These are modeled with effective dating (`effective_from` and `effective_to` columns) to maintain historical accuracy.
 
@@ -196,7 +149,6 @@ Some domains have specialized relationships:
 
 - **Tournament Structure**: Brackets, rounds, and matchups
 - **Rankings**: Poll systems, voters, and ballots
-- **Broadcasts**: Networks, announcers, and coverage areas
 
 ## Relationship Types
 
