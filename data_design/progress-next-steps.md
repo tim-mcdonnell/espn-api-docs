@@ -51,11 +51,11 @@ Based on our current progress, we've identified several areas for future develop
    - ~~Develop team comparison tools~~
    - ~~Create visualization-ready data structures~~
 
-3. **Develop Injury Tracking System**
-   - Implement `Injuries` table with injury types and severity
-   - Create `AthleteInjuries` table linking injuries to players
-   - Track timelines, return dates, and status updates
-   - Support historical injury analysis
+3. **~~Develop Injury Tracking System~~** ✓
+   - ~~Implement `Injuries` table with injury types and severity~~
+   - ~~Create `AthleteInjuries` table linking injuries to players~~
+   - ~~Track timelines, return dates, and status updates~~
+   - ~~Support historical injury analysis~~
 
 ### Medium Priority
 

@@ -68,6 +68,12 @@ Our normalized structure uses the following principles:
      ↓                                             ↓
 [ATHLETE_STATISTICS] ←→ [STAT_CATEGORIES] ←→ [STAT_TYPES]
 
+[INJURY_TYPES] ←→ [INJURIES] ←→ [ATHLETE_INJURIES] ←→ [ATHLETES]
+      ↑               ↑               ↑
+      │               │               │
+      ↓               ↓               ↓
+[BODY_PARTS] ←→ [INJURY_SEVERITY] ←→ [INJURY_UPDATES]
+
 [TOURNAMENTS] ←→ [SEASONS]
       ↑             ↑
       ↓             ↓
@@ -122,6 +128,7 @@ Our normalized structure uses the following principles:
 * [Play-by-Play Data Structure](play-by-play.md): Tables for detailed play-by-play information
 * [Tournament Structure](tournament-structure.md): Tables for tournament data and bracket information
 * [Betting Odds Structure](betting-odds-structure.md): Tables for betting odds, lines, and sportsbook data
+* [Injury Tracking System](injury-tracking.md): Tables for tracking athlete injuries, recovery, and medical information
 * [Technical Implementation](technical-implementation.md): Database design considerations and implementation details
 * [Indexing Strategy](indexing-strategy.md): DuckDB-specific indexing approach
 * [Progress and Next Steps](progress-next-steps.md): Current progress and planned enhancements
