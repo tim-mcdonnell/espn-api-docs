@@ -20,10 +20,9 @@ The following areas need additional documentation:
 1. **Standings Endpoints** - Document the `/seasons/{year}/types/{type}/groups/{group_id}/standings` endpoint for retrieving conference standings data
 2. **Capitalization Inconsistency** - Note the inconsistency between `powerindex` and `powerIndex` in some references
 3. **Specific Futures Details** - Add documentation for `/seasons/{year}/futures/{futures_id}` endpoint
-4. **Team Records Endpoint** - Document the `/seasons/{year}/teams/{team_id}/record` endpoint
-5. **Child Groups Navigation** - Better explain how to navigate the hierarchy between divisions and conferences
-6. **Standings Format** - Explain the data format for standings (division standings, conference standings, etc.)
-7. **Historical Data Limitations** - Provide more specific information about which endpoints have reliable historical data
+4. **Child Groups Navigation** - Better explain how to navigate the hierarchy between divisions and conferences
+5. **Standings Format** - Explain the data format for standings (division standings, conference standings, etc.)
+6. **Historical Data Limitations** - Provide more specific information about which endpoints have reliable historical data
 
 ## Documentation Structure
 
@@ -80,6 +79,7 @@ This API documentation is organized into the following files:
 | Endpoint | Status | Description |
 |----------|--------|-------------|
 | `/seasons/{year}/types/{type}` | ✅ | Information about a specific season type |
+| `/seasons/{year}/types` | ✅ | List of all season types for a given season |
 | `/seasons/{year}/types/{type}/groups` | ✅ | Groups (conferences) in the season type |
 | `/seasons/{year}/types/{type}/weeks` | ✅ | Weeks in the season type |
 | `/seasons/{year}/types/{type}/leaders` | ✅ | Statistical leaders for the season type |
@@ -91,6 +91,7 @@ This API documentation is organized into the following files:
 | `/seasons/{year}/types/{type}/weeks/{week}` | ✅ | Information about a specific week |
 | `/seasons/{year}/types/{type}/weeks/{week}/events` | ✅ | Events in a specific week |
 | `/seasons/{year}/types/{type}/weeks/{week}/rankings` | ✅ | Rankings for a specific week |
+| `/seasons/{year}/types/{type}/weeks/{week}/rankings/{ranking_id}` | ✅ | Detailed ranking data for a specific ranking system in a specific week |
 
 ## Team Endpoints
 
@@ -100,12 +101,17 @@ This API documentation is organized into the following files:
 | Endpoint | Status | Description |
 |----------|--------|-------------|
 | `/seasons/{year}/teams/{team_id}` | ✅ | Information about a specific team |
-| `/seasons/{year}/teams/{team_id}/athletes` | 🔄 | Athletes on the team - Returns array of athlete references with pagination |
-| `/seasons/{year}/teams/{team_id}/events` | 🔄 | Team's schedule/results - Returns array of event references with pagination |
-| `/seasons/{year}/teams/{team_id}/coaches` | ❌ | Team coaches - Returns array of coaches references with pagination |
-| `/seasons/{year}/teams/{team_id}/statistics` | 🔄 | Team statistics |
-| `/seasons/{year}/types/{type}/teams/{team_id}/statistics` | 🔄 | Team statistics for a specific season type |
-| `/seasons/{year}/teams/{team_id}/record` | ⚠️ | Team record details for a season |
+| `/seasons/{year}/teams/{team_id}/athletes` | ✅ | Athletes on the team - Returns array of athlete references with pagination |
+| `/seasons/{year}/teams/{team_id}/events` | ✅ | Team's schedule/results - Returns array of event references with pagination |
+| `/seasons/{year}/teams/{team_id}/coaches` | ✅ | Team coaches - Returns array of coaches references with pagination |
+| `/seasons/{year}/teams/{team_id}/statistics` | ✅ | Team statistics |
+| `/seasons/{year}/types/{type}/teams/{team_id}/statistics` | ✅ | Team statistics for a specific season type |
+| `/seasons/{year}/types/{type}/teams/{team_id}/record` | ✅ | Team record details for a season type |
+| `/seasons/{year}/types/{type}/teams/{team_id}/records/{record_id}` | ✅ | Detailed information about a specific record type |
+| `/seasons/{year}/teams/{team_id}/ranks` | ✅ | Team ranking information |
+| `/seasons/{year}/types/{type}/teams/{team_id}/ats` | ✅ | Against the spread records for a specific team |
+| `/seasons/{year}/teams/{team_id}/awards` | ✅ | Awards received by a team in a specific season |
+| `/teams/{team_id}/notes` | ✅ | Notes related to a specific team |
 
 ## Group and Conference Endpoints
 
@@ -131,6 +137,28 @@ This API documentation is organized into the following files:
 | `/events/{event_id}/competitions/{event_id}/competitors/{competitor_id}/records` | ⚠️ | Team records for the event |
 | `/events/{event_id}/competitions/{event_id}/officials` | ❌ | Officials for the event |
 
+## Rankings Endpoints
+
+!!! note "Dynamic Parameters"
+    Replace `{year}` with the season year and `{ranking_id}` with the ranking system ID (e.g., 1 for AP Top 25, 2 for Coaches Poll).
+
+| Endpoint | Status | Description |
+|----------|--------|-------------|
+| `/seasons/{year}/rankings` | ✅ | List of available rankings systems for the season |
+| `/seasons/{year}/rankings/{ranking_id}` | ⚠️ | Detailed information about a specific ranking system |
+| `/seasons/{year}/types/{type}/weeks/{week}/rankings` | ✅ | Rankings for a specific week |
+| `/seasons/{year}/types/{type}/weeks/{week}/rankings/{ranking_id}` | ✅ | Detailed ranking data for a specific ranking system in a specific week |
+
+## Awards Endpoints
+
+!!! note "Dynamic Parameters"
+    Replace `{year}` with the season year and `{award_id}` with the specific award ID.
+
+| Endpoint | Status | Description |
+|----------|--------|-------------|
+| `/seasons/{year}/awards` | ✅ | List of awards given for the season |
+| `/seasons/{year}/awards/{award_id}` | ⚠️ | Detailed information about a specific award, including winners |
+
 ## Athlete Endpoints
 
 !!! note "Dynamic Parameter"
@@ -139,6 +167,7 @@ This API documentation is organized into the following files:
 | Endpoint | Status | Description |
 |----------|--------|-------------|
 | `/athletes/{athlete_id}` | 🔄 | Information about a specific athlete |
+| `/seasons/{year}/athletes/{athlete_id}` | ⚠️ | Season-specific information about an athlete |
 | `/athletes/{athlete_id}/statistics/0` | 🔄 | Athlete statistics - Returns comprehensive statistics including defensive, general and offensive categories |
 | `/athletes/{athlete_id}/statisticslog` | ⚠️ | Athlete statistics log - Returns array of season entries with links to total and team-specific statistics |
 | `/seasons/{year}/types/{type}/athletes/{athlete_id}/statistics` | 🔄 | Athlete statistics for a specific season type |
@@ -152,6 +181,33 @@ This API documentation is organized into the following files:
 |----------|--------|-------------|
 | `/seasons/{year}/futures` | ✅ | List of futures/betting markets for the season |
 | `/seasons/{year}/futures/{futures_id}` | ⚠️ | Detailed information for a specific futures market |
+
+## Venue Endpoints
+
+!!! note "Dynamic Parameters"
+    Replace `{venue_id}` with the specific venue ID.
+
+| Endpoint | Status | Description |
+|----------|--------|-------------|
+| `/venues/{venue_id}` | ⚠️ | Information about a specific venue |
+
+## Franchise Endpoints
+
+!!! note "Dynamic Parameters"
+    Replace `{franchise_id}` with the specific franchise ID.
+
+| Endpoint | Status | Description |
+|----------|--------|-------------|
+| `/franchises/{franchise_id}` | ⚠️ | Information about a specific franchise |
+
+## College Endpoints
+
+!!! note "Dynamic Parameters"
+    Replace `{college_id}` with the specific college ID.
+
+| Endpoint | Status | Description |
+|----------|--------|-------------|
+| `/colleges/{college_id}` | ⚠️ | General information about a specific college |
 
 ## Common Query Parameters
 

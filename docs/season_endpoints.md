@@ -990,3 +990,130 @@ Season
 ```
 
 Each level provides references to related data through `$ref` fields, allowing for detailed exploration of the entire NCAA Men's Basketball ecosystem.
+
+## Specific Ranking System Endpoint
+
+### `/seasons/{year}/types/{type}/weeks/{week}/rankings/{ranking_id}`
+
+Returns detailed ranking information for a specific ranking system in a specific week.
+
+**Path Parameters:**
+- `year`: Season year (e.g., 2024)
+- `type`: Season type ID (1=Preseason, 2=Regular Season, 3=Postseason, 4=Off Season)
+- `week`: Week number within the season type
+- `ranking_id`: ID of the ranking system (1=AP Top 25, 2=Coaches Poll)
+
+**Common Ranking ID Values:**
+| Ranking ID | Description |
+|------------|-------------|
+| `1` | AP Top 25 |
+| `2` | USA Today Coaches Poll |
+| `3` | NET Rankings |
+| `4` | ESPN Daily RPI |
+
+**Response Structure:**
+- `id`: Unique identifier for the ranking system
+- `name`: Full name of the ranking system (e.g., "AP Top 25")
+- `shortName`: Abbreviated name (e.g., "AP Poll")
+- `type`: Type code for the ranking system
+- `occurrence`: Object with details about the week
+- `date`: ISO-8601 formatted date when the rankings were released
+- `headline`: Full headline for the rankings
+- `lastUpdated`: ISO-8601 timestamp of when the data was last updated
+- `ranks`: Array of ranked teams, with each entry containing:
+  - `current`: Current rank position
+  - `previous`: Previous rank position
+  - `points`: Vote points received
+  - `firstPlaceVotes`: Number of first-place votes
+  - `trend`: Change in ranking ("+1", "-2", or "-" for unchanged)
+  - `record`: Object containing team's record with wins and losses
+  - `team`: Reference to detailed team information
+  - `date`: ISO-8601 date when this ranking was effective
+  - `lastUpdated`: Last update timestamp for this rank
+
+**Example Request:**
+```bash
+curl -s "https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/seasons/2024/types/2/weeks/18/rankings/1" | jq
+```
+
+**Example Response (Partial):**
+```json
+{
+  "$ref": "http://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/seasons/2024/types/2/weeks/18/rankings/1?lang=en&region=us",
+  "id": "1",
+  "name": "AP Top 25",
+  "shortName": "AP Poll",
+  "type": "ap",
+  "occurrence": {
+    "number": 18,
+    "type": "week",
+    "last": false,
+    "value": "18",
+    "displayValue": "Week 18"
+  },
+  "date": "2024-03-04T08:00Z",
+  "headline": "2024 NCAA Basketball Rankings - AP Top 25 Week 18",
+  "shortHeadline": "2024 : Week 18",
+  "season": {
+    // Season details omitted for brevity
+  },
+  "lastUpdated": "2024-03-04T21:06Z",
+  "ranks": [
+    {
+      "current": 1,
+      "previous": 1,
+      "points": 1539.0,
+      "firstPlaceVotes": 52,
+      "trend": "-",
+      "record": {
+        "summary": "26-3",
+        "stats": [
+          {
+            "name": "wins",
+            "displayName": "Wins",
+            "shortDisplayName": "W",
+            "description": "Wins",
+            "abbreviation": "W",
+            "type": "wins",
+            "value": 26.0,
+            "displayValue": "26"
+          },
+          {
+            "name": "losses",
+            "displayName": "Losses",
+            "shortDisplayName": "L",
+            "description": "Losses",
+            "abbreviation": "L",
+            "type": "losses",
+            "value": 3.0,
+            "displayValue": "3"
+          }
+        ]
+      },
+      "team": {
+        "$ref": "http://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/seasons/2024/teams/248?lang=en&region=us"
+      },
+      "date": "2024-03-04T08:00Z",
+      "lastUpdated": "2024-03-04T21:06Z"
+    },
+    // Additional ranked teams omitted for brevity
+  ]
+}
+```
+
+**Notes:**
+- The response includes every ranked team (25 for AP Poll) with comprehensive information about their ranking.
+- The `trend` field shows the change in ranking from the previous poll with "+" for improvement, "-" for decline.
+- `firstPlaceVotes` shows how many voters ranked this team #1 in the poll.
+- The `points` field represents the weighted voting score used to determine the rankings.
+- Historical rankings are available by specifying previous weeks.
+
+!!! tip "Retrieving Complete Rankings"
+    This endpoint can be used to get the complete rankings for a specific poll. The `ranks` array contains every team that received votes, including those outside the top 25 that received votes.
+
+!!! info "Difference Between Ranking Systems"
+    Different ranking systems use different methodologies:
+    - AP Top 25: Human-voted poll from media members
+    - Coaches Poll: Human-voted poll from coaches
+    - NET Rankings: NCAA's primary sorting tool using game results, strength of schedule, etc.
+    - RPI: Rating Percentage Index based on a team's wins/losses and strength of schedule
