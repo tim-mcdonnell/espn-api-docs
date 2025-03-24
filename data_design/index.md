@@ -69,10 +69,14 @@ Our normalized structure uses the following principles:
 [ATHLETE_STATISTICS] ←→ [STAT_CATEGORIES] ←→ [STAT_TYPES]
 
 [INJURY_TYPES] ←→ [INJURIES] ←→ [ATHLETE_INJURIES] ←→ [ATHLETES]
-      ↑               ↑               ↑
-      │               │               │
-      ↓               ↓               ↓
-[BODY_PARTS] ←→ [INJURY_SEVERITY] ←→ [INJURY_UPDATES]
+      ↑               ↑               ↑                 ↑
+      │               │               │                 │
+      ↓               ↓               ↓                 ↓
+[BODY_PARTS] ←→ [INJURY_SEVERITY] ←→ [INJURY_UPDATES] ←→ [INJURY_PLAY_EVENTS] ←→ [PLAYS]
+                                                                ↑
+                                                                │
+                                                                ↓
+                                                       [INJURY_PATTERN_ANALYSIS]
 
 [TOURNAMENTS] ←→ [SEASONS]
       ↑             ↑
@@ -90,6 +94,12 @@ Our normalized structure uses the following principles:
   │
   ↓
 [SHOT_CHARTS] ←→ [COURT_ZONES] ←→ [SHOT_LOCATIONS]
+
+[TEAM_PERFORMANCE_METRICS] ←→ [TEAM_RANKING_PERFORMANCE] ←→ [TEAM_RANKINGS] ←→ [RANKING_SYSTEMS]
+         ↑                                ↑                         ↑                  ↑
+         │                                │                         │                  │
+         ↓                                ↓                         ↓                  ↓
+[TEAM_POSSESSION_DATA] ←→ [RANKING_PERFORMANCE_CORRELATION] ←→ [RANKING_ANOMALY] ←→ [RANKING_CONSISTENCY_METRICS]
 
 [ODDS_PROVIDERS] ←→ [EVENT_ODDS] ←→ [PROVIDER_EVENT_ODDS]
                       ↑                ↑

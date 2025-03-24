@@ -218,6 +218,16 @@ Common query patterns follow these relationship paths:
    Teams → TeamEvents → Events → TeamEvents → Teams
    ```
 
+5. **Injury Play Analysis**:
+   ```
+   Injuries → AthleteInjuries → InjuryPlayEvents → Plays → Events
+   ```
+
+6. **Performance-Rankings Correlation**:
+   ```
+   Teams → TeamPerformanceMetrics → TeamRankingPerformance → TeamRankings → RankingSystems
+   ```
+
 ## Additional ERD Diagrams
 
 For more detailed relationship diagrams on specific domains, see:
@@ -225,4 +235,6 @@ For more detailed relationship diagrams on specific domains, see:
 - [Statistics Structure](statistics-structure.md)
 - [Play-by-Play Data](play-by-play.md)
 - [Rankings Structure](rankings-structure.md)
-- [Tournament Structure](tournament-structure.md) 
+- [Tournament Structure](tournament-structure.md)
+- [Injury to Play/Event Relationships](injury-play-relationships.md)
+- [Performance Metrics to Rankings Relationships](performance-ranking-relationships.md) 

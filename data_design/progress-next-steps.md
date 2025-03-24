@@ -128,3 +128,78 @@ The following features are available in the ESPN API but have been intentionally
 - **Official Performance Metrics**: Metrics tracking official accuracy, consistency, and bias are excluded as they're not reliably available and offer limited analytical benefit.
 
 These items may be reconsidered in future iterations if analytical use cases emerge that require this data.
+
+## Next Steps: Implementation Recommendations
+
+Based on a thorough review of our database structure, the following recommendations are organized by priority for implementation:
+
+### High Priority
+
+1. **Standardize ID Field Naming**: Create consistent naming conventions for identifier fields across all tables, especially for ESPN identifiers (`espn_id` vs. numeric IDs).
+   - Implement standard data types (INTEGER vs. VARCHAR) for similar ID fields
+   - Document the rationale for any exceptions to the standard
+
+2. **Implement Data Integrity Framework**: Develop application-level integrity checks to compensate for DuckDB's limited foreign key constraint support.
+   - Create validation procedures that run during data loading
+   - Implement automated tests to verify referential integrity
+   - Document integrity verification processes
+
+3. **Optimize Constraint Implementation**: Strategically implement foreign key and other constraints considering DuckDB's characteristics.
+   - Define constraints after bulk data loading to minimize performance impact
+   - Add validation logic to handle DuckDB's "over-eager constraint checking" limitation with UPDATEs
+   - Implement integrity checks to ensure data consistency during incremental updates
+   - Document constraint strategy with clear rationale for implementation choices
+
+4. **Enhance Statistical Storage Consistency**: Address potential redundancy and consistency challenges in the statistical structure.
+   - Develop clear update protocols for statistics at different aggregation levels
+   - Implement verification checks to ensure consistency across related tables
+   - Create documentation for maintaining data quality during statistical updates
+
+5. **Clarify Complex Relationship Documentation**: Strengthen documentation for complex entity relationships, particularly in tournament structures.
+   - Create detailed entity-relationship diagrams for tournament advancement
+   - Document the lifecycle of tournament entities with clear state transitions
+   - Add examples of how entities relate through a complete tournament cycle
+
+### Medium Priority
+
+1. **Add Missing Entity Relationships**: ✅ Completed
+   - ✅ Created `InjuryPlayEvents`, `InjuryGameImpact`, and `InjuryPatternAnalysis` tables to strengthen connections between injuries and specific plays
+   - ✅ Created `TeamRankingPerformance`, `RankingPerformanceCorrelation`, and other tables to connect team performance metrics with rankings
+   - ✅ Updated entity diagrams and documentation to reflect these new relationships
+
+2. **Develop Materialized View Strategy**: Create a comprehensive approach for managing materialized views.
+   - Document refresh schedules based on data change frequency
+   - Implement automated view maintenance procedures
+   - Balance performance optimization with resource usage
+
+3. **Enhance Partitioning Documentation**: Provide more detailed implementation guidelines for time-based partitioning.
+   - Create specific examples for partitioning large fact tables by season/year
+   - Document partition management procedures (creation, merging, pruning)
+   - Address query optimization across partitions
+
+4. **Refine Data Type Specificity**: Review column data types for opportunities to use more specific types.
+   - Create custom enumeration types for fields with fixed value sets (status, home/away)
+   - Document domain constraints for numeric fields
+   - Standardize handling of temporal data types
+
+### Low Priority
+
+1. **Evaluate Analytical Schema Implementation**: Consider creating a star schema layer optimized for analytical queries.
+   - Assess query patterns and performance needs
+   - Design dimensional models for common analytical paths
+   - Document transformation processes between normalized and star schemas
+
+2. **Develop Team Identity Change Tracking**: Create a formal approach for handling team rebrands, relocations, and identity changes.
+   - Design history-tracking mechanism for franchise changes
+   - Document how historical records should be associated with current entities
+   - Implement versioning system for team identities
+
+3. **Create Comprehensive Update Frequency Guidelines**: Document how often different tables should be refreshed.
+   - Define update requirements based on entity volatility
+   - Create schedules for recalculating aggregate statistics
+   - Balance freshness requirements with processing costs
+
+4. **Implement Systematic Index Performance Review**: Establish a process for regularly reviewing and optimizing the indexing strategy.
+   - Create index performance metrics and monitoring
+   - Document procedures for evaluating index utility
+   - Implement index maintenance routines
