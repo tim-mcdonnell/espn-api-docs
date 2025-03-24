@@ -51,6 +51,17 @@ Our indexing strategy focuses on:
      │                                             │
      ↓                                             ↓
 [ATHLETE_STATISTICS] ←→ [STAT_CATEGORIES] ←→ [STAT_TYPES]
+
+[TOURNAMENTS] ←→ [SEASONS]
+      ↑             ↑
+      ↓             ↓
+[TOURNAMENT_BRACKETS] ←→ [TOURNAMENT_ROUNDS] ←→ [TOURNAMENT_SEEDS]
+      ↑                          ↑                      ↑
+      ↓                          ↓                      ↓
+[TOURNAMENT_MATCHUPS] ←→ [EVENTS/GAMES] ←→ [TEAMS] ←→ [TOURNAMENT_ADVANCEMENT]
+      ↑                          ↑             ↑             ↑
+      ↓                          ↓             ↓             ↓
+[TOURNAMENT_BIDS] ←→ [SELECTION_CRITERIA] ←→ [SELECTION_METRICS] ←→ [BRACKETOLOGY_PROJECTIONS]
 ```
 
 ## Core Dimension Tables
@@ -1248,134 +1259,128 @@ Since DuckDB indexes can consume significant memory that is not automatically bu
 ## Next Steps
 
 ### High Priority
-1. **Develop Tournament Structure Modeling**
-   - Add tables for brackets, regions, and pods
-   - Implement seed tracking and advancement history
-   - Create tournament-specific metadata tables
-   - Model tournament eligibility and selection criteria
-
-2. **Add Officials/Referees Data Structure**
+1. **Add Officials/Referees Data Structure**
    - Create `Officials` table for referee information
    - Develop `EventOfficials` join table to link officials to games
    - Track historical officiating assignments and tendencies
    - Include role designations (head referee, etc.)
 
-3. **Create Shot Charts and Spatial Analysis Structure**
+2. **Create Shot Charts and Spatial Analysis Structure**
    - Implement `ShotCharts` table with x/y coordinates
    - Add made/missed, distance, and points metadata
    - Include assist tracking for made baskets
    - Support spatial analysis queries
 
-4. **Add Coaching Staff Data Structure**
+3. **Add Coaching Staff Data Structure**
    - Create `Coaches` dimension table with biographical information
    - Implement `TeamCoaches` relationship table with roles
    - Track coaching history and tenure
    - Include assistant coaches and staff roles
 
-5. **Implement Betting Odds Structure**
+4. **Implement Betting Odds Structure**
    - Create tables for pre-game odds and lines
    - Track line movements over time
    - Include over/under and point spread data
    - Store odds provider information
 
 ### Medium Priority
-6. **Develop Injury Tracking System**
+5. **Develop Injury Tracking System**
    - Implement `Injuries` table with injury types and severity
    - Create `AthleteInjuries` table linking injuries to players
    - Track timelines, return dates, and status updates
    - Support historical injury analysis
 
-7. **Implement Media Resource Tracking**
+6. **Implement Media Resource Tracking**
    - Create `MediaResources` table for logos, headshots, and venue images
    - Develop metadata for image dimensions and types
    - Track resource currency and updates
    - Include alt text and accessibility information
 
-8. **Create Event Status History Tracking**
+7. **Create Event Status History Tracking**
    - Implement temporal tracking of game status changes
    - Store clock, period, and status type information
    - Support timeline reconstruction
    - Include status change reasons
 
-9. **Develop Reference Resolution Strategy**
+8. **Develop Reference Resolution Strategy**
     - Create approach for handling ESPN API's `$ref` fields
     - Implement reference caching mechanisms
     - Establish rules for reference staleness
     - Develop hierarchical resolution patterns
 
-10. **Add News/Headlines/Notes Structure**
+9. **Add News/Headlines/Notes Structure**
     - Create `News` table for articles and stories
     - Implement `EventHeadlines` for game-specific headlines
     - Track news sources and publication timestamps
     - Include relevance scores and categorization
 
-11. **Ensure Consistent UTC Time Handling**
+10. **Ensure Consistent UTC Time Handling**
     - Standardize all temporal fields in UTC
     - Implement display time zone conversion
     - Create timestamp precision standards
     - Ensure date range query optimization
 
-12. **Add Venue Capacity and Attendance Tracking**
+11. **Add Venue Capacity and Attendance Tracking**
     - Enhance `Venues` table with detailed capacity information
     - Add historical attendance tracking
     - Calculate attendance percentages
     - Include venue configuration information
 
-13. **Establish Data Refresh Patterns**
+12. **Establish Data Refresh Patterns**
     - Define incremental vs. full refresh strategies
     - Create data freshness metadata tracking
     - Implement priority-based update scheduling
     - Develop change detection mechanisms
 
-14. **Create View Layer for Analytics**
+13. **Create View Layer for Analytics**
     - Develop materialized views for common analytical patterns
     - Create data marts for specific analysis domains
     - Implement role-based access controls
     - Support visualization-friendly data structures
 
-15. **Consider Partitioning Strategy**
+14. **Consider Partitioning Strategy**
     - Implement partitioning for large historical tables
     - Develop season-based partitioning scheme
     - Create hot/cold data management strategy
     - Optimize partition sizes for DuckDB
 
-16. **Develop Approach for Derived Statistics**
+15. **Develop Approach for Derived Statistics**
     - Create calculation methodology documentation
     - Implement derived statistic triggers or procedures
     - Establish calculation provenance tracking
     - Develop statistic version control
 
-17. **Create Test Queries for Analytics**
+16. **Create Test Queries for Analytics**
     - Develop benchmark query suite
     - Create validation test cases
     - Implement performance testing framework
     - Document common analytical patterns
 
-18. **Implement Team Conference Alignment History**
+17. **Implement Team Conference Alignment History**
     - Track historical conference membership
     - Create effective dating for alignment changes
     - Support realignment analysis
     - Include division classification history
 
-19. **Develop Memory Management Routines**
+18. **Develop Memory Management Routines**
     - Create scheduled database detach/reattach jobs
     - Implement index usage monitoring
     - Develop memory pressure handling
     - Create index rebuild optimization
 
-20. **Add Alternate Names and Identifiers**
+19. **Add Alternate Names and Identifiers**
     - Create historical name tracking for teams/venues
     - Implement external ID mapping system
     - Support alias resolution
     - Track brand changes and renamings
 
-21. **Develop Game Highlight Structure**
+20. **Develop Game Highlight Structure**
     - Create `Highlights` table for key moments
     - Link highlights to plays and athletes
     - Include media references and timestamps
     - Support highlight categorization
 
-22. **Implement Records and Milestones Tracking**
+21. **Implement Records and Milestones Tracking**
     - Track team and player records
     - Create milestone achievement history
     - Implement record-breaking detection
@@ -1399,4 +1404,256 @@ Since DuckDB indexes can consume significant memory that is not automatically bu
 - How frequently should aggregate statistics be recalculated?
 - What is the optimal backup strategy for a DuckDB-based analytics database?
 - How should we handle ESPN API schema changes or deprecations?
-- What is the proper approach for handling team identity changes (rebrands, relocations) over time? 
+- What is the proper approach for handling team identity changes (rebrands, relocations) over time?
+
+## Tournament Structure
+
+### Tournaments
+Core tournament information.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| tournament_id | INTEGER | Primary key (auto-increment) | 1 |
+| espn_id | VARCHAR | ESPN's identifier | 3136952 |
+| uid | VARCHAR | Universal identifier | s:40~l:41~t:3136952 |
+| name | VARCHAR | Tournament name | NCAA Men's Basketball Tournament |
+| short_name | VARCHAR | Short display name | NCAA Tournament |
+| abbreviation | VARCHAR | Tournament abbreviation | NCAAT |
+| season_id | INTEGER | Foreign key to seasons | 1 |
+| start_date | TIMESTAMP | Tournament start date | 2025-03-18T00:00Z |
+| end_date | TIMESTAMP | Tournament end date | 2025-04-07T00:00Z |
+| num_teams | INTEGER | Number of participating teams | 68 |
+| type | VARCHAR | Tournament type | championship |
+| level | VARCHAR | Tournament level | national |
+| slug | VARCHAR | URL identifier | ncaa-tournament |
+| status | VARCHAR | Current status | scheduled |
+| format | VARCHAR | Tournament format | single-elimination |
+| is_postseason | BOOLEAN | If postseason tournament | true |
+| is_conference | BOOLEAN | If conference tournament | false |
+| logo_url | VARCHAR | URL to tournament logo | https://a.espncdn.com/i/tournaments/ncaa/ncaam.png |
+
+**Indexing:**
+- Order by `season_id, start_date` for chronological queries
+- Create explicit index for API integration:
+  ```sql
+  CREATE INDEX idx_tournaments_espn_id ON Tournaments(espn_id);
+  ```
+
+### TournamentBrackets
+Defines bracket structures within tournaments.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| bracket_id | INTEGER | Primary key (auto-increment) | 1 |
+| tournament_id | INTEGER | Foreign key to tournaments | 1 |
+| espn_id | VARCHAR | ESPN's identifier | 108 |
+| name | VARCHAR | Bracket name | East |
+| display_name | VARCHAR | Display name | East Region |
+| short_name | VARCHAR | Short display name | East |
+| abbreviation | VARCHAR | Bracket abbreviation | E |
+| order_num | INTEGER | Display/priority order | 1 |
+| num_teams | INTEGER | Number of teams in bracket | 16 |
+| round_count | INTEGER | Number of rounds in bracket | 4 |
+| location | VARCHAR | Regional location | New York, NY |
+| venue_id | INTEGER | Foreign key to venues (regional site) | 24 |
+| is_active | BOOLEAN | If bracket is active | true |
+
+**Indexing:**
+- Order by `tournament_id, order_num` to maintain bracket order
+- No explicit indexes needed due to small table size
+
+### TournamentRounds
+Defines rounds within tournaments.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| round_id | INTEGER | Primary key (auto-increment) | 1 |
+| tournament_id | INTEGER | Foreign key to tournaments | 1 |
+| bracket_id | INTEGER | Foreign key to brackets (NULL for cross-bracket rounds) | 1 |
+| espn_id | VARCHAR | ESPN's identifier | 1156 |
+| name | VARCHAR | Round name | Sweet 16 |
+| short_name | VARCHAR | Short display name | Sweet 16 |
+| abbreviation | VARCHAR | Round abbreviation | S16 |
+| round_number | INTEGER | Sequential round number | 3 |
+| start_date | TIMESTAMP | Round start date | 2025-03-27T00:00Z |
+| end_date | TIMESTAMP | Round end date | 2025-03-28T23:59Z |
+| num_games | INTEGER | Number of games in round | 8 |
+| teams_eliminated | INTEGER | Teams eliminated in round | 8 |
+| teams_advanced | INTEGER | Teams advancing from round | 8 |
+| is_play_in | BOOLEAN | If play-in/first four | false |
+| is_championship | BOOLEAN | If championship round | false |
+| round_sequence | INTEGER | Overall tournament sequence | 5 |
+
+**Indexing:**
+- Order by `tournament_id, round_sequence` for chronological round order
+- No explicit indexes needed due to moderate table size
+
+### TournamentSeeds
+Defines seed positions within tournament brackets.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| seed_id | INTEGER | Primary key (auto-increment) | 1 |
+| tournament_id | INTEGER | Foreign key to tournaments | 1 |
+| bracket_id | INTEGER | Foreign key to brackets | 1 |
+| seed_number | INTEGER | Seed position (1-16) | 1 |
+| display_name | VARCHAR | Display representation | #1 |
+| team_id | INTEGER | Foreign key to teams | 52 |
+| team_entry_type | VARCHAR | Entry type | automatic |
+| team_entry_reason | VARCHAR | Reason for entry | conference-champion |
+| is_protected | BOOLEAN | If protected seed | true |
+| original_seed_id | INTEGER | Original seed ID if play-in winner | NULL |
+| initial_matchup_round_id | INTEGER | First round for this seed | 2 |
+| is_play_in | BOOLEAN | If involved in play-in game | false |
+
+**Indexing:**
+- Order by `tournament_id, bracket_id, seed_number` for efficient lookups
+- Create index for team participation:
+  ```sql
+  CREATE INDEX idx_tournament_seeds_team ON TournamentSeeds(team_id, tournament_id);
+  ```
+
+### TournamentMatchups
+Defines tournament game matchups.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| matchup_id | INTEGER | Primary key (auto-increment) | 1 |
+| tournament_id | INTEGER | Foreign key to tournaments | 1 |
+| bracket_id | INTEGER | Foreign key to brackets | 1 |
+| round_id | INTEGER | Foreign key to rounds | 1 |
+| event_id | INTEGER | Foreign key to events | 401526511 |
+| matchup_number | INTEGER | Sequence within round | 1 |
+| home_seed_id | INTEGER | Foreign key to higher seed | 1 |
+| away_seed_id | INTEGER | Foreign key to lower seed | 16 |
+| next_matchup_id | INTEGER | Next matchup for winner | 33 |
+| next_matchup_position | VARCHAR | Position in next matchup | home |
+| pod_number | INTEGER | Group/pod identifier | 1 |
+| status | VARCHAR | Matchup status | scheduled |
+| order_num | INTEGER | Display order | 1 |
+
+**Indexing:**
+- Order by `tournament_id, round_id, matchup_number` for bracket display
+- Create index for event linkage:
+  ```sql
+  CREATE INDEX idx_tournament_matchups_event ON TournamentMatchups(event_id);
+  ```
+
+### TournamentAdvancement
+Tracks team progression through tournament.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| advancement_id | INTEGER | Primary key (auto-increment) | 1 |
+| tournament_id | INTEGER | Foreign key to tournaments | 1 |
+| team_id | INTEGER | Foreign key to teams | 52 |
+| seed_id | INTEGER | Foreign key to seeds | 1 |
+| from_round_id | INTEGER | Round advanced from | 2 |
+| to_round_id | INTEGER | Round advanced to | 3 |
+| from_matchup_id | INTEGER | Matchup advanced from | 1 |
+| to_matchup_id | INTEGER | Matchup advanced to | 33 |
+| advancement_date | TIMESTAMP | When advancement occurred | 2025-03-22T23:15Z |
+| is_upset | BOOLEAN | If considered an upset | false |
+| upset_differential | INTEGER | Seed differential if upset | NULL |
+| advancement_type | VARCHAR | How team advanced | win |
+| eliminated | BOOLEAN | If team was eliminated | false |
+| elimination_round_id | INTEGER | Round where eliminated | NULL |
+
+**Indexing:**
+- Order by `tournament_id, team_id, from_round_id` for team progression
+- Create index for upset analysis:
+  ```sql
+  CREATE INDEX idx_tournament_advancement_upset ON TournamentAdvancement(tournament_id) WHERE is_upset = true;
+  ```
+
+### TournamentSelectionCriteria
+Tracks criteria used for tournament selection.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| criteria_id | INTEGER | Primary key (auto-increment) | 1 |
+| tournament_id | INTEGER | Foreign key to tournaments | 1 |
+| season_id | INTEGER | Foreign key to seasons | 1 |
+| criteria_name | VARCHAR | Name of criterion | NET Ranking |
+| criteria_type | VARCHAR | Type of criterion | metric |
+| weight | DECIMAL | Relative importance | 0.7 |
+| description | VARCHAR | Description of criterion | NCAA Evaluation Tool ranking |
+| threshold | VARCHAR | Typical threshold value | Top 40 |
+| is_public | BOOLEAN | If publicly disclosed | true |
+
+**Indexing:**
+- Order by `tournament_id, weight DESC` to prioritize important criteria
+- No explicit indexes needed due to small table size
+
+### TeamTournamentSelectionMetrics
+Metrics related to team selection for tournaments.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| selection_metric_id | INTEGER | Primary key (auto-increment) | 1 |
+| tournament_id | INTEGER | Foreign key to tournaments | 1 |
+| team_id | INTEGER | Foreign key to teams | 52 |
+| criteria_id | INTEGER | Foreign key to selection criteria | 1 |
+| metric_value | VARCHAR | Value of metric | 5 |
+| metric_rank | INTEGER | Rank within criterion | 5 |
+| is_strength | BOOLEAN | If considered a strength | true |
+| is_weakness | BOOLEAN | If considered a weakness | false |
+| selection_impact | VARCHAR | Impact on selection | high |
+| selection_notes | VARCHAR | Notes on selection impact | Strong Quad 1 record |
+
+**Indexing:**
+- Order by `tournament_id, team_id` to group metrics by team
+- Create index for significant selection factors:
+  ```sql
+  CREATE INDEX idx_selection_metrics_impact ON TeamTournamentSelectionMetrics(tournament_id, selection_impact) WHERE selection_impact = 'high';
+  ```
+
+### TournamentBids
+Tracks automatic and at-large bids.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| bid_id | INTEGER | Primary key (auto-increment) | 1 |
+| tournament_id | INTEGER | Foreign key to tournaments | 1 |
+| bid_type | VARCHAR | Type of bid | automatic |
+| group_id | INTEGER | Foreign key to groups/conferences | 1 |
+| team_id | INTEGER | Foreign key to teams | 52 |
+| selection_date | TIMESTAMP | When bid was awarded | 2025-03-15T23:00Z |
+| bid_reason | VARCHAR | Reason for bid | conference-champion |
+| selection_rank | INTEGER | Selection committee ranking | 1 |
+| last_team_in | BOOLEAN | If last team selected | false |
+| first_team_out | BOOLEAN | If first team not selected | false |
+| selection_controversy | INTEGER | Level of selection controversy | 0 |
+
+**Indexing:**
+- Order by `tournament_id, bid_type, selection_rank`
+- Create index for bubble teams:
+  ```sql
+  CREATE INDEX idx_tournament_bids_bubble ON TournamentBids(tournament_id) WHERE last_team_in = true OR first_team_out = true;
+  ```
+
+### BracketologyProjections
+Historical projections from bracketologists.
+
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| projection_id | INTEGER | Primary key (auto-increment) | 1 |
+| tournament_id | INTEGER | Foreign key to tournaments | 1 |
+| team_id | INTEGER | Foreign key to teams | 52 |
+| projection_date | TIMESTAMP | When projection was made | 2025-03-05T12:00Z |
+| analyst_name | VARCHAR | Bracketologist name | Joe Lunardi |
+| publication | VARCHAR | Publication source | ESPN |
+| projected_seed | VARCHAR | Projected seed | 2 |
+| projected_region | VARCHAR | Projected region | East |
+| selection_likelihood | DECIMAL | Likelihood of selection | 0.95 |
+| projected_status | VARCHAR | Status in projection | lock |
+| actual_selected | BOOLEAN | If actually selected | true |
+| actual_seed | VARCHAR | Actual seed received | 1 |
+| prediction_accuracy | VARCHAR | Accuracy of prediction | accurate |
+
+**Indexing:**
+- Order by `tournament_id, projection_date DESC` for latest projections
+- Create index for team tracking:
+  ```sql
+  CREATE INDEX idx_bracketology_projections_team ON BracketologyProjections(team_id, projection_date DESC);
+  ``` 
