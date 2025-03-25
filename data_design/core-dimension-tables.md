@@ -14,6 +14,8 @@ Stores the basic league information.
 | abbreviation | VARCHAR | League abbreviation | NCAAM |
 | short_name | VARCHAR | Short name | NCAAM |
 | slug | VARCHAR | URL identifier | mens-college-basketball |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
 **Indexing:** No explicit indexes needed as this is a small table with an integer primary key.
 
@@ -29,6 +31,8 @@ Stores information about seasons.
 | start_date | TIMESTAMP | Season start date | 2024-07-13T07:00Z |
 | end_date | TIMESTAMP | Season end date | 2025-04-09T06:59Z |
 | league_id | INTEGER | Foreign key to leagues | 41 |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
 **Indexing:** 
 - Order by `year` to optimize zonemap effectiveness for year-based filters
@@ -41,7 +45,7 @@ Stores types of seasons (preseason, regular season, etc.).
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
 | season_type_id | INTEGER | Primary key (auto-increment) | 1 |
-| espn_id | INTEGER | ESPN's ID | 2 |
+| espn_id | VARCHAR | ESPN's ID | 2 |
 | season_id | INTEGER | Foreign key to seasons | 1 |
 | name | VARCHAR | Type name | Regular Season |
 | abbreviation | VARCHAR | Short abbreviation | reg |
@@ -50,6 +54,8 @@ Stores types of seasons (preseason, regular season, etc.).
 | has_groups | BOOLEAN | If has group info | true |
 | has_standings | BOOLEAN | If has standings | true |
 | slug | VARCHAR | URL identifier | regular-season |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
 **Indexing:** No explicit indexes needed as this is a small table with few distinct values.
 
@@ -65,6 +71,8 @@ Weekly divisions within a season type.
 | text | VARCHAR | Display text | Week 1 |
 | start_date | TIMESTAMP | Week start date | 2024-11-04T08:00Z |
 | end_date | TIMESTAMP | Week end date | 2024-11-11T07:59Z |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
 **Indexing:**
 - Order by `season_type_id, start_date` to improve filtering by date ranges within a season type

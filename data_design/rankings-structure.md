@@ -10,6 +10,7 @@ Stores information about different ranking systems and polls.
 |--------|------|-------------|---------|
 | ranking_system_id | INTEGER | Primary key (auto-increment) | 1 |
 | espn_id | VARCHAR | ESPN's identifier | 1 |
+| uid | VARCHAR | Universal identifier | s:40~l:41~rs:1 |
 | name | VARCHAR | Full name of the ranking system | AP Top 25 |
 | short_name | VARCHAR | Abbreviated name | AP |
 | description | VARCHAR | Description of the ranking system | Associated Press Top 25 Poll |
@@ -19,8 +20,10 @@ Stores information about different ranking systems and polls.
 | points_based | BOOLEAN | If the poll is based on points | true |
 | voter_count | INTEGER | Number of voters in the poll | 61 |
 | voters | VARCHAR | JSON array of voter information | [{"name": "John Smith", "affiliation": "Tribune"}] |
-| active | BOOLEAN | If the poll is currently active | true |
+| is_active | BOOLEAN | If the poll is currently active | true |
 | historical_cutoff | INTEGER | Number of ranked teams historically | 25 |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
 **Indexing:**
 - No explicit indexes needed due to small table size

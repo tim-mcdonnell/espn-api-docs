@@ -113,6 +113,7 @@ Our normalized structure uses the following principles:
 * [Core Dimension Tables](core-dimensions.md): Primary tables that define key entities like leagues, teams, and athletes
 * [Core Relationship Tables](core-relationships.md): Tables that define relationships between core entities
 * [Core Fact Tables](core-facts.md): Tables that store event data and performance metrics
+* [ID Field Standardization](id-field-standardization.md): Conventions for identifier fields across all tables
 * [Statistical Data Structure](statistics-structure.md): Tables for storing and organizing statistical data
 * [Team Performance Metrics](team-performance-metrics.md): Framework for advanced team efficiency and comparison metrics
 * [Rankings Data Structure](rankings-structure.md): Tables for tracking rankings and polls

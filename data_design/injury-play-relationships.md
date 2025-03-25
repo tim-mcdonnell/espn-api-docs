@@ -9,7 +9,7 @@ Links specific injuries to the exact plays where they occurred.
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
 | injury_play_id | INTEGER | Primary key (auto-increment) | 1 |
-| athlete_injury_id | INTEGER | Foreign key to ATHLETE_INJURIES | 253 |
+| athlete_injury_id | INTEGER | Foreign key to AthleteInjuries | 253 |
 | play_id | INTEGER | Foreign key to Plays | 6721 |
 | event_id | INTEGER | Foreign key to Events | 401524661 |
 | certainty_level | VARCHAR | Confidence in play connection (confirmed, probable, possible) | confirmed |
@@ -37,7 +37,7 @@ Tracks the impact of injuries on specific games.
 | impact_id | INTEGER | Primary key (auto-increment) | 1 |
 | event_id | INTEGER | Foreign key to Events | 401524661 |
 | team_id | INTEGER | Foreign key to Teams | 2509 |
-| athlete_injury_id | INTEGER | Foreign key to ATHLETE_INJURIES | 253 |
+| athlete_injury_id | INTEGER | Foreign key to AthleteInjuries | 253 |
 | minutes_missed | DECIMAL | Minutes missed due to injury in this game | 32.5 |
 | preexisting_injury | BOOLEAN | If injury occurred before this game | true |
 | replacement_athlete_id | INTEGER | Athlete who replaced the injured player | 4066490 |
@@ -61,11 +61,11 @@ Aggregates injury patterns for analytical purposes.
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
 | pattern_id | INTEGER | Primary key (auto-increment) | 1 |
-| injury_type_id | INTEGER | Foreign key to INJURY_TYPES | 12 |
-| season_id | INTEGER | Foreign key to seasons | 2024 |
+| injury_type_id | INTEGER | Foreign key to InjuryTypes | 12 |
+| season_id | INTEGER | Foreign key to Seasons | 2024 |
 | play_type_id | INTEGER | Foreign key to PlayTypes | 404 |
 | occurrence_count | INTEGER | Number of occurrences | 15 |
-| court_zone_id | INTEGER | Foreign key to court zones (if applicable) | 3 |
+| court_zone_id | INTEGER | Foreign key to CourtZones (if applicable) | 3 |
 | period_distribution | VARCHAR | JSON distribution by period | {"1":5,"2":8,"OT":2} |
 | game_time_distribution | VARCHAR | JSON distribution by game time | {"0-5":2,"5-10":4,"35-40":9} |
 | fatigue_correlation | DECIMAL | Correlation with minutes played (0.0-1.0) | 0.72 |
@@ -114,10 +114,10 @@ SELECT p.text, p.clock_time, p.period, e.name as game, a.full_name as player,
 FROM InjuryPlayEvents ipe
 JOIN Plays p ON ipe.play_id = p.play_id
 JOIN Events e ON ipe.event_id = e.event_id
-JOIN ATHLETE_INJURIES ai ON ipe.athlete_injury_id = ai.athlete_injury_id
-JOIN INJURIES i ON ai.injury_id = i.injury_id
-JOIN BODY_PARTS bp ON i.body_part_id = bp.body_part_id
-JOIN ATHLETES a ON ai.athlete_id = a.athlete_id
+JOIN AthleteInjuries ai ON ipe.athlete_injury_id = ai.athlete_injury_id
+JOIN Injuries i ON ai.injury_id = i.injury_id
+JOIN BodyParts bp ON i.body_part_id = bp.body_part_id
+JOIN Athletes a ON ai.athlete_id = a.athlete_id
 WHERE bp.name = 'Knee'
 AND e.season_id = ?
 ORDER BY e.start_date DESC;
@@ -132,9 +132,9 @@ SELECT pt.name as play_type, it.name as injury_type,
 FROM InjuryPlayEvents ipe
 JOIN Plays p ON ipe.play_id = p.play_id
 JOIN PlayTypes pt ON p.play_type_id = pt.play_type_id
-JOIN ATHLETE_INJURIES ai ON ipe.athlete_injury_id = ai.athlete_injury_id
-JOIN INJURIES i ON ai.injury_id = i.injury_id
-JOIN INJURY_TYPES it ON i.injury_type_id = it.injury_type_id
+JOIN AthleteInjuries ai ON ipe.athlete_injury_id = ai.athlete_injury_id
+JOIN Injuries i ON ai.injury_id = i.injury_id
+JOIN InjuryTypes it ON i.injury_type_id = it.injury_type_id
 GROUP BY pt.name, it.name
 ORDER BY occurrences DESC;
 ``` 

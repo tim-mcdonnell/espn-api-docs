@@ -14,152 +14,163 @@ The injury tracking system serves to:
 ## Core Entity Relationships
 
 ```
-[INJURY_TYPES] ←→ [INJURIES] ←→ [ATHLETE_INJURIES]
+[InjuryTypes] ←→ [Injuries] ←→ [AthleteInjuries]
       ↑                ↑               ↑
       │                │               │
       ↓                ↓               ↓
-[BODY_PARTS] ←→ [INJURY_SEVERITY] ←→ [ATHLETES]
+[BodyParts] ←→ [InjurySeverity] ←→ [Athletes]
                       ↑                ↑ 
                       │                │
                       ↓                ↓
-[RECOVERY_PROTOCOLS] ←→ [INJURY_UPDATES] ←→ [TEAM_MEDICAL_STAFF]
+[RecoveryProtocols] ←→ [InjuryUpdates] ←→ [TeamMedicalStaff]
 ```
 
 ## Table Definitions
 
-### INJURY_TYPES
+### InjuryTypes
 
 Defines categories and classifications of injuries.
 
-| Column | Data Type | Description |
-|--------|-----------|-------------|
-| injury_type_id | INTEGER | Primary key |
-| name | VARCHAR | Specific injury type name (e.g., "ACL Tear", "Concussion") |
-| category | VARCHAR | General category (e.g., "Ligament", "Head") |
-| description | VARCHAR | Detailed description of the injury type |
-| typical_recovery_time_min | INTEGER | Minimum typical recovery time (days) |
-| typical_recovery_time_max | INTEGER | Maximum typical recovery time (days) |
-| is_surgical | BOOLEAN | Whether injury typically requires surgery |
-| created_at | TIMESTAMP | Record creation timestamp |
-| updated_at | TIMESTAMP | Record update timestamp |
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| injury_type_id | INTEGER | Primary key | 1 |
+| espn_id | VARCHAR | ESPN's identifier for this injury type | 12 |
+| uid | VARCHAR | Universal identifier | s:40~l:41~it:12 |
+| name | VARCHAR | Specific injury type name (e.g., "ACL Tear", "Concussion") | ACL Tear |
+| category | VARCHAR | General category (e.g., "Ligament", "Head") | Ligament |
+| description | VARCHAR | Detailed description of the injury type | Complete tear of the anterior cruciate ligament |
+| typical_recovery_time_min | INTEGER | Minimum typical recovery time (days) | 180 |
+| typical_recovery_time_max | INTEGER | Maximum typical recovery time (days) | 365 |
+| is_surgical | BOOLEAN | Whether injury typically requires surgery | true |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
-### BODY_PARTS
+### BodyParts
 
 Catalogs body parts/locations for injury classification.
 
-| Column | Data Type | Description |
-|--------|-----------|-------------|
-| body_part_id | INTEGER | Primary key |
-| name | VARCHAR | Name of the body part (e.g., "Knee", "Ankle") |
-| region | VARCHAR | Body region (e.g., "Lower Body", "Upper Body") |
-| laterality | VARCHAR | Side indicator (e.g., "Left", "Right", "Bilateral", "N/A") |
-| created_at | TIMESTAMP | Record creation timestamp |
-| updated_at | TIMESTAMP | Record update timestamp |
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| body_part_id | INTEGER | Primary key | 1 |
+| espn_id | VARCHAR | ESPN's identifier for this body part | 4 |
+| uid | VARCHAR | Universal identifier | s:40~l:41~bp:4 |
+| name | VARCHAR | Name of the body part (e.g., "Knee", "Ankle") | Knee |
+| region | VARCHAR | Body region (e.g., "Lower Body", "Upper Body") | Lower Body |
+| laterality | VARCHAR | Side indicator (e.g., "Left", "Right", "Bilateral", "N/A") | Bilateral |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
-### INJURY_SEVERITY
+### InjurySeverity
 
 Standardized severity classifications for injuries.
 
-| Column | Data Type | Description |
-|--------|-----------|-------------|
-| severity_id | INTEGER | Primary key |
-| name | VARCHAR | Severity level name (e.g., "Minor", "Moderate", "Severe") |
-| description | VARCHAR | Detailed description of this severity level |
-| estimated_games_missed_min | INTEGER | Minimum games typically missed |
-| estimated_games_missed_max | INTEGER | Maximum games typically missed |
-| created_at | TIMESTAMP | Record creation timestamp |
-| updated_at | TIMESTAMP | Record update timestamp |
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| severity_id | INTEGER | Primary key | 1 |
+| espn_id | VARCHAR | ESPN's identifier for this severity level | 3 |
+| uid | VARCHAR | Universal identifier | s:40~l:41~is:3 |
+| name | VARCHAR | Severity level name (e.g., "Minor", "Moderate", "Severe") | Severe |
+| description | VARCHAR | Detailed description of this severity level | Requires surgical intervention and extended recovery |
+| estimated_games_missed_min | INTEGER | Minimum games typically missed | 20 |
+| estimated_games_missed_max | INTEGER | Maximum games typically missed | 82 |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
-### INJURIES
+### Injuries
 
 Core table defining specific injury instances.
 
-| Column | Data Type | Description |
-|--------|-----------|-------------|
-| injury_id | INTEGER | Primary key |
-| injury_type_id | INTEGER | Foreign key to INJURY_TYPES |
-| body_part_id | INTEGER | Foreign key to BODY_PARTS |
-| severity_id | INTEGER | Foreign key to INJURY_SEVERITY |
-| espn_injury_id | VARCHAR | ESPN's identifier for this injury |
-| description | VARCHAR | Detailed description of this specific injury |
-| is_chronic | BOOLEAN | Whether this is a chronic/recurring condition |
-| created_at | TIMESTAMP | Record creation timestamp |
-| updated_at | TIMESTAMP | Record update timestamp |
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| injury_id | INTEGER | Primary key | 1 |
+| injury_type_id | INTEGER | Foreign key to InjuryTypes | 1 |
+| body_part_id | INTEGER | Foreign key to BodyParts | 1 |
+| severity_id | INTEGER | Foreign key to InjurySeverity | 1 |
+| espn_id | VARCHAR | ESPN's identifier for this injury | 87652 |
+| uid | VARCHAR | Universal identifier | s:40~l:41~i:87652 |
+| description | VARCHAR | Detailed description of this specific injury | Complete ACL tear with meniscus damage |
+| is_chronic | BOOLEAN | Whether this is a chronic/recurring condition | false |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
-### ATHLETE_INJURIES
+### AthleteInjuries
 
 Links athletes to specific injuries and tracks their status.
 
-| Column | Data Type | Description |
-|--------|-----------|-------------|
-| athlete_injury_id | INTEGER | Primary key |
-| athlete_id | INTEGER | Foreign key to ATHLETES |
-| injury_id | INTEGER | Foreign key to INJURIES |
-| team_id | INTEGER | Foreign key to TEAMS (team at time of injury) |
-| event_id | INTEGER | Foreign key to EVENTS (null if not game-related) |
-| injury_date | TIMESTAMP | When the injury occurred |
-| discovery_date | TIMESTAMP | When the injury was discovered/diagnosed |
-| initial_status | VARCHAR | Initial game status (e.g., "Questionable", "Out") |
-| current_status | VARCHAR | Current game status |
-| status_last_updated | TIMESTAMP | When status was last changed |
-| projected_return_date | TIMESTAMP | Estimated return date |
-| actual_return_date | TIMESTAMP | Actual return date (null if not yet returned) |
-| is_season_ending | BOOLEAN | Whether injury ended player's season |
-| is_career_ending | BOOLEAN | Whether injury ended player's career |
-| surgery_date | TIMESTAMP | Date of surgery (null if no surgery) |
-| placed_on_ir_date | TIMESTAMP | Date placed on injured reserve (null if not applicable) |
-| reinjury_of | INTEGER | Self-reference to previous injury instance (null if new) |
-| created_at | TIMESTAMP | Record creation timestamp |
-| updated_at | TIMESTAMP | Record update timestamp |
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| athlete_injury_id | INTEGER | Primary key | 1 |
+| athlete_id | INTEGER | Foreign key to Athletes | 4433137 |
+| injury_id | INTEGER | Foreign key to Injuries | 1 |
+| team_id | INTEGER | Foreign key to Teams (team at time of injury) | 2509 |
+| event_id | INTEGER | Foreign key to Events (null if not game-related) | 401524661 |
+| injury_date | TIMESTAMP | When the injury occurred | 2024-01-15T19:42:30Z |
+| discovery_date | TIMESTAMP | When the injury was discovered/diagnosed | 2024-01-16T14:00:00Z |
+| initial_status | VARCHAR | Initial game status (e.g., "Questionable", "Out") | Out |
+| current_status | VARCHAR | Current game status | Out |
+| status_last_updated | TIMESTAMP | When status was last changed | 2024-01-16T14:00:00Z |
+| projected_return_date | TIMESTAMP | Estimated return date | 2024-08-15T00:00:00Z |
+| actual_return_date | TIMESTAMP | Actual return date (null if not yet returned) | null |
+| is_season_ending | BOOLEAN | Whether injury ended player's season | true |
+| is_career_ending | BOOLEAN | Whether injury ended player's career | false |
+| surgery_date | TIMESTAMP | Date of surgery (null if no surgery) | 2024-01-25T08:30:00Z |
+| placed_on_ir_date | TIMESTAMP | Date placed on injured reserve (null if not applicable) | 2024-01-17T16:00:00Z |
+| reinjury_of | INTEGER | Self-reference to previous injury instance (null if new) | null |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
-### INJURY_UPDATES
+### InjuryUpdates
 
 Tracks the progression and updates for athlete injuries.
 
-| Column | Data Type | Description |
-|--------|-----------|-------------|
-| update_id | INTEGER | Primary key |
-| athlete_injury_id | INTEGER | Foreign key to ATHLETE_INJURIES |
-| update_date | TIMESTAMP | When this update was reported |
-| status | VARCHAR | Status at time of update |
-| description | VARCHAR | Details of the update |
-| source | VARCHAR | Source of the update information |
-| return_timeline_min | INTEGER | Updated minimum days to return |
-| return_timeline_max | INTEGER | Updated maximum days to return |
-| setback_reported | BOOLEAN | Whether this update reports a setback |
-| created_at | TIMESTAMP | Record creation timestamp |
-| updated_at | TIMESTAMP | Record update timestamp |
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| update_id | INTEGER | Primary key | 1 |
+| athlete_injury_id | INTEGER | Foreign key to AthleteInjuries | 1 |
+| update_date | TIMESTAMP | When this update was reported | 2024-02-01T15:30:00Z |
+| status | VARCHAR | Status at time of update | Out |
+| description | VARCHAR | Details of the update | Surgery successful, beginning initial rehab phase |
+| source | VARCHAR | Source of the update information | Team PR |
+| return_timeline_min | INTEGER | Updated minimum days to return | 180 |
+| return_timeline_max | INTEGER | Updated maximum days to return | 220 |
+| setback_reported | BOOLEAN | Whether this update reports a setback | false |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
-### RECOVERY_PROTOCOLS
+### RecoveryProtocols
 
 Documents recovery approaches for injuries.
 
-| Column | Data Type | Description |
-|--------|-----------|-------------|
-| protocol_id | INTEGER | Primary key |
-| injury_type_id | INTEGER | Foreign key to INJURY_TYPES |
-| name | VARCHAR | Name of the protocol |
-| description | VARCHAR | Detailed description |
-| typical_duration | INTEGER | Typical duration in days |
-| is_surgical | BOOLEAN | Whether this protocol involves surgery |
-| rehab_phases | INTEGER | Number of rehabilitation phases |
-| created_at | TIMESTAMP | Record creation timestamp |
-| updated_at | TIMESTAMP | Record update timestamp |
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| protocol_id | INTEGER | Primary key | 1 |
+| injury_type_id | INTEGER | Foreign key to InjuryTypes | 1 |
+| espn_id | VARCHAR | ESPN's identifier for this protocol | 53 |
+| uid | VARCHAR | Universal identifier | s:40~l:41~rp:53 |
+| name | VARCHAR | Name of the protocol | Standard ACL Reconstruction Protocol |
+| description | VARCHAR | Detailed description | Progressive rehabilitation protocol following ACL reconstruction |
+| typical_duration | INTEGER | Typical duration in days | 270 |
+| is_surgical | BOOLEAN | Whether this protocol involves surgery | true |
+| rehab_phases | INTEGER | Number of rehabilitation phases | 4 |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
-### TEAM_MEDICAL_STAFF
+### TeamMedicalStaff
 
 Tracks medical personnel associated with teams.
 
-| Column | Data Type | Description |
-|--------|-----------|-------------|
-| staff_id | INTEGER | Primary key |
-| team_id | INTEGER | Foreign key to TEAMS |
-| name | VARCHAR | Staff member's name |
-| role | VARCHAR | Role (e.g., "Head Trainer", "Team Physician") |
-| start_date | TIMESTAMP | When they started with the team |
-| end_date | TIMESTAMP | When they left the team (null if current) |
-| created_at | TIMESTAMP | Record creation timestamp |
-| updated_at | TIMESTAMP | Record update timestamp |
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| staff_id | INTEGER | Primary key | 1 |
+| team_id | INTEGER | Foreign key to Teams | 2509 |
+| espn_id | VARCHAR | ESPN's identifier for this staff member | 782 |
+| uid | VARCHAR | Universal identifier | s:40~l:41~t:2509~ms:782 |
+| name | VARCHAR | Staff member's name | Dr. Sarah Johnson |
+| role | VARCHAR | Role (e.g., "Head Trainer", "Team Physician") | Team Physician |
+| start_date | TIMESTAMP | When they started with the team | 2020-06-01T00:00:00Z |
+| end_date | TIMESTAMP | When they left the team (null if current) | null |
+| created_at | TIMESTAMP | Record creation timestamp | 2024-03-01T12:00:00Z |
+| updated_at | TIMESTAMP | Record update timestamp | 2024-03-15T09:30:00Z |
 
 ## Implementation Guidelines
 
@@ -191,9 +202,9 @@ The injury tracking system should follow these implementation guidelines:
 **Athletes currently injured on a specific team:**
 ```sql
 SELECT a.full_name, i.description, ai.current_status, ai.projected_return_date
-FROM ATHLETE_INJURIES ai
-JOIN ATHLETES a ON ai.athlete_id = a.athlete_id
-JOIN INJURIES i ON ai.injury_id = i.injury_id
+FROM AthleteInjuries ai
+JOIN Athletes a ON ai.athlete_id = a.athlete_id
+JOIN Injuries i ON ai.injury_id = i.injury_id
 WHERE ai.team_id = ? AND ai.actual_return_date IS NULL
 ORDER BY ai.projected_return_date ASC;
 ```
@@ -203,9 +214,9 @@ ORDER BY ai.projected_return_date ASC;
 SELECT i.description, bp.name AS body_part, bp.laterality,
        ai.injury_date, ai.actual_return_date,
        DATEDIFF('day', ai.injury_date, COALESCE(ai.actual_return_date, CURRENT_DATE)) AS days_out
-FROM ATHLETE_INJURIES ai
-JOIN INJURIES i ON ai.injury_id = i.injury_id
-JOIN BODY_PARTS bp ON i.body_part_id = bp.body_part_id
+FROM AthleteInjuries ai
+JOIN Injuries i ON ai.injury_id = i.injury_id
+JOIN BodyParts bp ON i.body_part_id = bp.body_part_id
 WHERE ai.athlete_id = ?
 ORDER BY ai.injury_date DESC;
 ```
@@ -214,8 +225,8 @@ ORDER BY ai.injury_date DESC;
 ```sql
 SELECT t.display_name AS team, COUNT(ai.athlete_injury_id) AS injury_count,
        SUM(DATEDIFF('day', ai.injury_date, COALESCE(ai.actual_return_date, CURRENT_DATE))) AS total_days_missed
-FROM ATHLETE_INJURIES ai
-JOIN TEAMS t ON ai.team_id = t.team_id
+FROM AthleteInjuries ai
+JOIN Teams t ON ai.team_id = t.team_id
 WHERE ai.injury_date BETWEEN ? AND ? -- Season start and end dates
 GROUP BY t.team_id, t.display_name
 ORDER BY total_days_missed DESC;
